@@ -1,0 +1,13 @@
+{
+  "name": "everwell-peizhen-system",
+  "version": "1.0.0",
+  "description": "健康来敲门 Everwell · 陪诊服务平台全栈系统 (Web官网 + 小程序/App双模端 + 管理后台与B端机构RBAC + Node/SQLite后端)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node --no-warnings server/index.js",
+    "test": "node --no-warnings server/test-e2e.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

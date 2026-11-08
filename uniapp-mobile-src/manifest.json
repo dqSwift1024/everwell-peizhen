@@ -1,0 +1,41 @@
+{
+  "name": "健康来敲门-Everwell",
+  "appid": "__UNI__EVERWELL2026",
+  "description": "健康来敲门 Everwell · 失能老人与低行动能力患者家庭就医陪诊平台 (C端家庭模式 + 陪诊师接单双模式)",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "vueVersion": "3",
+  "app-plus": {
+    "usingComponents": true,
+    "distribute": {
+      "android": {
+        "permissions": [
+          "<uses-permission android:name=\"android.permission.ACCESS_FINE_LOCATION\"/>",
+          "<uses-permission android:name=\"android.permission.CAMERA\"/>"
+        ],
+        "schemes": ["everwell", "diditaxi", "androidamap"]
+      },
+      "ios": {
+        "urlschemewhitelist": ["diditaxi", "iosamap", "weixin"]
+      }
+    }
+  },
+  "mp-weixin": {
+    "appid": "wx_everwell_miniapp_id",
+    "setting": {
+      "urlCheck": false,
+      "es6": true,
+      "minified": true
+    },
+    "permission": {
+      "scope.userLocation": {
+        "desc": "您的位置信息将用于匹配接手位置、跳转滴滴/高德无障碍打车及陪诊师现场签到打卡"
+      }
+    },
+    "navigateToMiniProgramAppIdList": [
+      "wxaf35009675aa0b2a",
+      "wxbc97f0f99d643963",
+      "wx06a78469f2131886"
+    ]
+  }
+}

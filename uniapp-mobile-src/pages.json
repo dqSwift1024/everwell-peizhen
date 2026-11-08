@@ -1,0 +1,50 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "健康来敲门 · 家庭关怀与陪诊",
+        "navigationBarBackgroundColor": "#075e50",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/ai-triage/index",
+      "style": {
+        "navigationBarTitleText": "AI问答与就医推荐(+)"
+      }
+    },
+    {
+      "path": "pages/booking/index",
+      "style": {
+        "navigationBarTitleText": "分级陪诊预约与交通衔接(+)"
+      }
+    },
+    {
+      "path": "pages/patient-confirm/index",
+      "style": {
+        "navigationBarTitleText": "患者本人知情确认与授权(+)"
+      }
+    },
+    {
+      "path": "pages/post-visit/index",
+      "style": {
+        "navigationBarTitleText": "结果分享·医嘱打卡·理赔资料(+)"
+      }
+    },
+    {
+      "path": "pages/escort-workbench/index",
+      "style": {
+        "navigationBarTitleText": "陪诊师工作台 (5步SOP打卡)",
+        "navigationBarBackgroundColor": "#102e29",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "健康来敲门 Everwell",
+    "navigationBarBackgroundColor": "#075e50",
+    "backgroundColor": "#faf9f5"
+  }
+}
