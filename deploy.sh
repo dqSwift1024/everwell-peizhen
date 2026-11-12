@@ -14,7 +14,7 @@ echo "========================================================"
 # 1. 本地打包项目源码
 cd "$(dirname "$0")"
 TAR_FILE="/tmp/everwell-peizhen-deploy.tar.gz"
-tar --exclude='.git' --exclude='node_modules' -czf "$TAR_FILE" .
+tar --exclude='.git' --exclude='node_modules' --exclude='data' -czf "$TAR_FILE" .
 echo "✅ 1. 本地源码打包完成: $TAR_FILE"
 
 # 2. 上传代码包至目标服务器
