@@ -1,4 +1,5 @@
 const { DatabaseSync } = require('node:sqlite');
+const crypto = require('node:crypto');
 const path = require('node:path');
 const fs = require('node:fs');
 
@@ -7,8 +8,17 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
+const uploadsDir = path.join(__dirname, '..', 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 const dbPath = path.join(dataDir, 'everwell.sqlite');
 const db = new DatabaseSync(dbPath);
+
+function hashPassword(password, salt = 'ew_salt_2026') {
+  return crypto.scryptSync(String(password), salt, 32).toString('hex');
+}
 
 function ensureColumn(tableName, colName, colDef) {
   const cols = db.prepare(`PRAGMA table_info(${tableName})`).all();
@@ -23,8 +33,31 @@ function initDb() {
     PRAGMA synchronous = NORMAL;
     PRAGMA busy_timeout = 5000;
 
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE,
+      phone TEXT UNIQUE,
+      password_hash TEXT,
+      display_name TEXT NOT NULL,
+      role TEXT NOT NULL, -- 'FAMILY', 'ESCORT', 'ADMIN', 'ORG_ADMIN'
+      org_id INTEGER,
+      escort_id INTEGER,
+      status TEXT DEFAULT 'ACTIVE', -- 'ACTIVE', 'DELETED'
+      agreed_privacy_at TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      role TEXT NOT NULL,
+      expires_at INTEGER NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS patients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_user_id INTEGER DEFAULT 1,
       name TEXT NOT NULL,
       relation TEXT DEFAULT '父亲',
       age INTEGER NOT NULL,
@@ -63,12 +96,12 @@ function initDb() {
       gender TEXT DEFAULT '女',
       age INTEGER DEFAULT 38,
       phone TEXT NOT NULL,
-      source_type TEXT NOT NULL, -- 'ORG' (B端机构人员) or 'SELF' (自有培训人员)
+      source_type TEXT NOT NULL,
       org_id INTEGER,
       org_name TEXT NOT NULL,
       cert_title TEXT NOT NULL,
       health_cert_expiry TEXT NOT NULL,
-      skills TEXT NOT NULL, -- comma separated: L0,L1,L2,L3
+      skills TEXT NOT NULL,
       hospitals TEXT NOT NULL,
       schedule_status TEXT DEFAULT 'AVAILABLE',
       rating REAL DEFAULT 4.98,
@@ -91,7 +124,8 @@ function initDb() {
     CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_no TEXT NOT NULL UNIQUE,
-      source_channel TEXT NOT NULL, -- 'Web官网', '微信小程序', 'App客户端'
+      source_channel TEXT NOT NULL,
+      user_id INTEGER DEFAULT 1,
       patient_id INTEGER DEFAULT 1,
       patient_name TEXT NOT NULL,
       contact_phone TEXT NOT NULL,
@@ -107,10 +141,13 @@ function initDb() {
       overtime_hours INTEGER DEFAULT 0,
       overtime_fee REAL DEFAULT 0,
       total_price REAL NOT NULL,
-      reg_mode TEXT NOT NULL, -- '已挂好号', '跳官方挂号', '需人工协助挂号'
+      payment_status TEXT DEFAULT 'PAID', -- 'UNPAID', 'PAID', 'REFUNDED'
+      pay_channel TEXT DEFAULT '微信支付',
+      pay_trade_no TEXT DEFAULT '',
+      reg_mode TEXT NOT NULL,
       pickup_address TEXT NOT NULL,
       dropoff_address TEXT NOT NULL,
-      patient_confirm_status TEXT DEFAULT 'PENDING', -- 'PENDING', 'CONFIRMED'
+      patient_confirm_status TEXT DEFAULT 'PENDING',
       patient_confirm_method TEXT DEFAULT '待患者本人确认',
       patient_confirm_time TEXT,
       escort_id INTEGER,
@@ -120,10 +157,14 @@ function initDb() {
       commission_rate REAL DEFAULT 0.08,
       platform_fee REAL DEFAULT 0,
       provider_payout REAL DEFAULT 0,
-      sop_step INTEGER DEFAULT 0, -- 0:待派单, 1:已接单, 2:已达接手点, 3:院内陪诊中, 4:已传医嘱报告, 5:已交接完成, -1:已退改取消
-      live_note TEXT DEFAULT '等待完成患者授权确认后指派陪诊师',
+      sop_step INTEGER DEFAULT 0,
+      live_note TEXT DEFAULT '等待支付与患者确认授权',
       refund_amount REAL DEFAULT 0,
       settled INTEGER DEFAULT 0,
+      rating_score INTEGER DEFAULT 0,
+      rating_comment TEXT DEFAULT '',
+      after_sale_status TEXT DEFAULT 'NONE', -- 'NONE', 'OPEN', 'RESOLVED'
+      after_sale_reason TEXT DEFAULT '',
       created_at TEXT NOT NULL
     );
 
@@ -149,8 +190,8 @@ function initDb() {
       recheck_date TEXT NOT NULL,
       recheck_prep TEXT NOT NULL,
       authorized_viewers TEXT NOT NULL,
-      report_images TEXT NOT NULL, -- JSON array
-      claim_docs TEXT NOT NULL, -- JSON array for 保险理赔资料(+)
+      report_images TEXT NOT NULL,
+      claim_docs TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
 
@@ -181,7 +222,7 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS articles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      category TEXT NOT NULL, -- '无障碍攻略', '时令饮食', '视频讲堂', '慢病预防'
+      category TEXT NOT NULL,
       solar_term TEXT NOT NULL,
       title TEXT NOT NULL,
       summary TEXT NOT NULL,
@@ -198,7 +239,7 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS commercial_slots (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slot_type TEXT NOT NULL, -- '体检推荐', '购药入口', '保险入口'
+      slot_type TEXT NOT NULL,
       title TEXT NOT NULL,
       subtitle TEXT NOT NULL,
       partner_name TEXT NOT NULL,
@@ -210,7 +251,7 @@ function initDb() {
 
     CREATE TABLE IF NOT EXISTS applications (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      apply_type TEXT NOT NULL, -- 'ORG' or 'ESCORT'
+      apply_type TEXT NOT NULL,
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       city TEXT NOT NULL,
@@ -218,14 +259,38 @@ function initDb() {
       status TEXT DEFAULT 'PENDING',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS invoices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER DEFAULT 1,
+      order_no TEXT NOT NULL,
+      title_type TEXT DEFAULT '个人',
+      invoice_title TEXT NOT NULL,
+      tax_no TEXT DEFAULT '',
+      amount REAL NOT NULL,
+      email TEXT NOT NULL,
+      status TEXT DEFAULT 'ISSUED',
+      created_at TEXT NOT NULL
+    );
   `);
 
-  // Idempotent migrations for existing V1 SQLite databases
+  // Idempotent column migrations for existing SQLite files
+  ensureColumn('patients', 'owner_user_id', 'INTEGER DEFAULT 1');
   ensureColumn('patients', 'relation', "TEXT DEFAULT '父亲'");
   ensureColumn('patients', 'care_streak', 'INTEGER DEFAULT 12');
   ensureColumn('patients', 'morning_checkin_date', "TEXT DEFAULT ''");
   ensureColumn('patients', 'evening_checkin_date', "TEXT DEFAULT ''");
+
+  ensureColumn('orders', 'user_id', 'INTEGER DEFAULT 1');
+  ensureColumn('orders', 'payment_status', "TEXT DEFAULT 'PAID'");
+  ensureColumn('orders', 'pay_channel', "TEXT DEFAULT '微信支付'");
+  ensureColumn('orders', 'pay_trade_no', "TEXT DEFAULT 'WX202611120001'");
   ensureColumn('orders', 'settled', 'INTEGER DEFAULT 0');
+  ensureColumn('orders', 'rating_score', 'INTEGER DEFAULT 0');
+  ensureColumn('orders', 'rating_comment', "TEXT DEFAULT ''");
+  ensureColumn('orders', 'after_sale_status', "TEXT DEFAULT 'NONE'");
+  ensureColumn('orders', 'after_sale_reason', "TEXT DEFAULT ''");
+
   ensureColumn('health_diaries', 'patient_id', 'INTEGER DEFAULT 1');
   ensureColumn('articles', 'hospital_link', "TEXT DEFAULT '北京协和医院(东单院区)'");
   ensureColumn('articles', 'author_name', "TEXT DEFAULT '李淑芬 · 金牌陪诊顾问'");
@@ -240,19 +305,63 @@ function initDb() {
   } else {
     upgradeExistingSeedData();
   }
+  seedUsersIfEmpty();
+  ensureSampleSvgSlip();
+}
+
+function ensureSampleSvgSlip() {
+  const sampleSlipPath = path.join(uploadsDir, 'sample-lab-report.svg');
+  if (!fs.existsSync(sampleSlipPath)) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340" viewBox="0 0 520 340">
+      <rect width="520" height="340" fill="#faf9f5" stroke="#075e50" stroke-width="3" rx="12"/>
+      <text x="260" y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#075e50">北京协和医院 · 门诊生化检验报告单 (存档件)</text>
+      <line x1="24" y1="54" x2="496" y2="54" stroke="#c5d6ce" stroke-width="1.5"/>
+      <text x="30" y="80" font-size="13" fill="#142c2a">患者姓名：张建国    性别：男    年龄：78岁    科室：心内科门诊</text>
+      <rect x="28" y="96" width="464" height="168" fill="#ffffff" stroke="#dce3dc" rx="6"/>
+      <text x="44" y="124" font-size="12.5" font-weight="bold" fill="#075e50">检验项目                    结果          参考区间         单位</text>
+      <text x="44" y="152" font-size="12.5" fill="#142c2a">空腹血糖 (GLU)              5.8           3.9 - 6.1        mmol/L</text>
+      <text x="44" y="180" font-size="12.5" fill="#142c2a">总胆固醇 (TC)               4.62          2.85 - 5.70      mmol/L</text>
+      <text x="44" y="208" font-size="12.5" fill="#142c2a">低密度脂蛋白 (LDL-C)        2.51          &lt; 3.37           mmol/L</text>
+      <text x="44" y="236" font-size="12.5" fill="#142c2a">血肌酐 (Cr)                 76            57 - 111         μmol/L</text>
+      <text x="30" y="292" font-size="11.5" fill="#5c706b">陪诊顾问现场拍照归档 · GB/T 47801—2026 合规水牌：仅供家属留存，不做诊疗解读</text>
+      <circle cx="445" cy="285" r="32" fill="none" stroke="#d77844" stroke-width="2" stroke-dasharray="4,2"/>
+      <text x="445" y="289" text-anchor="middle" font-size="11" font-weight="bold" fill="#d77844">已核验归档</text>
+    </svg>`;
+    fs.writeFileSync(sampleSlipPath, svg, 'utf8');
+  }
+}
+
+function seedUsersIfEmpty() {
+  const uCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
+  if (uCount > 0) return;
+
+  const ins = db.prepare(`
+    INSERT INTO users (username, phone, password_hash, display_name, role, org_id, escort_id, status, agreed_privacy_at, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', '2026-11-12 09:00', '2026-11-12 09:00')
+  `);
+
+  // 1. Default C-end Family caregiver account
+  ins.run('family_zhang', '13800138000', hashPassword('123456'), '张晓敏 (主照护家属)', 'FAMILY', null, null);
+  // 2. Certified Escort accounts matching escorts table
+  ins.run('escort_li', '13811223344', hashPassword('123456'), '李淑芬 (持证陪诊师)', 'ESCORT', 1, 1);
+  ins.run('escort_wang', '13699887766', hashPassword('123456'), '王建军 (自有陪诊师)', 'ESCORT', null, 2);
+  ins.run('escort_zhao', '13566778899', hashPassword('123456'), '赵敏 (护士转岗陪诊师)', 'ESCORT', 1, 3);
+  // 3. Platform Super Admin & B-End Partner Organization RBAC Admin
+  ins.run('admin', '13900000001', hashPassword('Everwell2026'), '平台总控管理员', 'ADMIN', null, null);
+  ins.run('org_bj', '13910086611', hashPassword('Org2026'), '刘建国 · 北京康护之家(机构主管)', 'ORG_ADMIN', 1, null);
 }
 
 function seedInitialData() {
   const insertPatient = db.prepare(`
     INSERT INTO patients (
-      name, relation, age, gender, city, birthday, days_to_birthday, weather_alert,
+      owner_user_id, name, relation, age, gender, city, birthday, days_to_birthday, weather_alert,
       mobility_level, mobility_label, chronic_tags, authorized_family, address,
       care_streak, morning_checkin_date, evening_checkin_date
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertPatient.run(
-    '张建国', '父亲', 78, '男', '北京', '11月17日', 5,
+    1, '张建国', '父亲', 78, '男', '北京', '11月17日', 5,
     '立冬寒潮橙色预警：今日北京大幅降温 8°C (2°C~9°C)，阵风6级，需特别防范老人清晨血压波动与膝关节受凉。',
     'L2', 'L2 中度失能 · 需轮椅代借与推行 (+¥80)',
     '高血压2级, 双膝退行性骨关节炎, 冠心病史',
@@ -262,7 +371,7 @@ function seedInitialData() {
   );
 
   insertPatient.run(
-    '陈秀英', '母亲', 82, '女', '北京', '12月03日', 21,
+    1, '陈秀英', '母亲', 82, '女', '北京', '12月03日', 21,
     '干燥降温提醒：今日室内外温差大，高龄骨质疏松长辈外出复诊请穿防滑软底鞋，备好保温杯。',
     'L3', 'L3 重度受限 · 无电梯上下楼背扶协助 (+¥150)',
     '重度骨质疏松, 右髋关节置换术后, 2型糖尿病',
@@ -296,32 +405,35 @@ function seedInitialData() {
 
   const insertOrder = db.prepare(`
     INSERT INTO orders (
-      order_no, source_channel, patient_id, patient_name, contact_phone, city, hospital_name, department,
+      order_no, source_channel, user_id, patient_id, patient_name, contact_phone, city, hospital_name, department,
       visit_date, visit_time, package_name, base_price, mobility_level, mobility_fee, overtime_hours, overtime_fee,
-      total_price, reg_mode, pickup_address, dropoff_address, patient_confirm_status, patient_confirm_method,
-      patient_confirm_time, escort_id, escort_name, org_id, org_name, commission_rate, platform_fee, provider_payout,
+      total_price, payment_status, pay_channel, pay_trade_no, reg_mode, pickup_address, dropoff_address,
+      patient_confirm_status, patient_confirm_method, patient_confirm_time,
+      escort_id, escort_name, org_id, org_name, commission_rate, platform_fee, provider_payout,
       sop_step, live_note, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   insertOrder.run(
-    'EW2026110801', '微信小程序', 1, '张建国 (78岁)', '13800138000', '北京',
-    '北京协和医院(东单院区)', '心内科门诊', '2026-11-13', '08:30',
+    'EW2026110801', '微信小程序', 1, 1, '张建国 (78岁)', '13800138000', '北京',
+    '北京协和医院(东单院区)', '心内科门诊', '2026-11-15', '08:30',
     '半天陪诊 (4小时标准服务)', 288, 'L2 需轮椅代借与推行', 80, 0, 0,
-    368, '已挂好号', '朝阳区幸福一村3号楼2单元门口', '就诊结束后送回幸福一村3号楼家中交接',
+    368, 'PAID', '微信支付', 'WX20261112085011', '已挂好号',
+    '朝阳区幸福一村3号楼2单元门口', '就诊结束后送回幸福一村3号楼家中交接',
     'CONFIRMED', '方式A：患者本人微信大字卡片一键确认授权', '2026-11-12 09:15',
     1, '李淑芬', 1, '北京康护之家(B端机构)', 0.08, 29.44, 338.56,
     2, '陪诊师李淑芬已到达幸福一村接手位置，已备好折叠轮椅并完成现场接手拍照打卡', '2026-11-12 08:50'
   );
 
   insertOrder.run(
-    'EW2026110802', 'App客户端', 2, '陈秀英 (82岁)', '13911112222', '北京',
-    '北京积水潭医院(新街口院区)', '矫形骨科专家门诊', '2026-11-14', '09:00',
+    'EW2026110802', 'App客户端', 1, 2, '陈秀英 (82岁)', '13800138000', '北京',
+    '北京积水潭医院(新街口院区)', '矫形骨科专家门诊', '2026-11-16', '09:00',
     '半天陪诊 (4小时标准服务)', 288, 'L3 无电梯上下楼背扶协助', 150, 0, 0,
-    438, '需人工协助挂号', '西城区新街口北大街12号院4楼(无电梯)', '原址4楼家中安全交接',
+    438, 'PAID', '微信支付', 'WX20261112101899', '需人工协助挂号',
+    '西城区新街口北大街12号院4楼(无电梯)', '原址4楼家中安全交接',
     'CONFIRMED', '方式B：同住家属在旁，患者同机手写签名授权', '2026-11-12 10:20',
     null, null, null, null, 0.08, 35.04, 402.96,
-    0, '患者已确认授权，等待后台调度员指派具备 L3 上下楼技能的陪诊师', '2026-11-12 10:18'
+    0, '已支付并完成患者授权确认，等待后台调度员指派具备 L3 上下楼技能的陪诊师', '2026-11-12 10:18'
   );
 
   seedOrderEvents();
@@ -334,10 +446,10 @@ function seedInitialData() {
   `).run(
     1, 'EW2026102509', '张建国 (78岁)', '北京协和医院(东单院区) · 心内科门诊', '2026-10-29', '李淑芬',
     '【医生原话客观记录】患者近期立冬降温后晨起血压偏高(146/88mmHg)，双下肢无明显水肿。医嘱维持苯磺酸氨氯地平片每日1片早饭后服用，新增阿托伐他汀钙片每晚1片；严格低盐饮食(每日食盐<5g)，避免清晨顶风外出；2周后空腹复查血生化、肝肾功能及动态心电图。',
-    '2026-11-16',
+    '2026-11-18',
     '检查前1天晚上22:00后禁食禁水（保持空腹抽血），携带上次心电图底单与医保卡。',
     '张晓敏(女儿), 张伟(儿子)',
-    JSON.stringify(['生化全项检验报告单_20261029.jpg', '心内科门诊处方笺_20261029.jpg', '十二导联心电图报告.jpg']),
+    JSON.stringify(['/uploads/sample-lab-report.svg']),
     JSON.stringify(['北京医疗门诊收费电子票据(¥426.50).pdf', '协和医院门诊病历页照片.jpg', '医保结算费用明细清单.jpg']),
     '2026-10-29 12:10'
   );
@@ -368,7 +480,6 @@ function seedSevenDayDiaries() {
     INSERT INTO health_diaries (patient_id, patient_name, log_date, bp_sys, bp_dia, blood_sugar, feeling, note, morning_care_ok, evening_care_ok)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  // Chronological order so DESC shows latest first
   const history = [
     [1, '张建国', '11-06', 146, 90, 6.8, '晨起略晕', '刚降温血压偏高，已联系女儿预约协和复查。'],
     [1, '张建国', '11-07', 142, 88, 6.5, '状态尚可', '调整了室内暖气温度，严格少盐饮食。'],
@@ -397,7 +508,6 @@ function seedCommunityArticles() {
     '带腿脚不便或半失能父母去协和东单院区，切记不要停在窄胡同口！滴滴/高德直接定位「协和医院东单院区-东门无障碍通道」，下车即是缓坡。进门诊楼1层大厅右侧北端即有共享轮椅柜（建议提前备好微信免押分或身份证）。80岁以上长辈在采血中心可走助老优先窗口，陪诊员提前15分钟到院代借轮椅能省下至少200米步行体力。',
     '心内科门诊', '北京协和医院(东单院区)', '李淑芬 · 协和陪诊142单', '三甲轮椅实测', 2680, 342, 0, 1
   );
-
   insertArticle.run(
     '无障碍攻略', '骨科必看',
     '积水潭新街口院区带80岁老人拍X光/核磁：无电梯老小区上下楼+院内转运干货',
@@ -405,7 +515,6 @@ function seedCommunityArticles() {
     '去积水潭看矫形骨科或创伤骨科的长辈，出门前切记穿「无金属拉链、无金属纽扣」的宽松棉质运动裤，拍X光和核磁时免去反复穿脱折腾！老旧小区无电梯建议勾选L3背扶协助，到南门后走右侧无障碍坡道直达放射科专用宽体电梯。切记携带既往半年内的胶片原片与光盘。',
     '矫形骨科门诊', '北京积水潭医院(新街口院区)', '王建军 · 红十字急救持证', '骨科少折腾指南', 1920, 256, 1, 0
   );
-
   insertArticle.run(
     '时令饮食', '立冬节气',
     '立冬后失能与高血压老人温补食谱：山药黑芝麻护血管、控盐5g防晨峰血压',
@@ -413,7 +522,6 @@ function seedCommunityArticles() {
     '立冬交节后气温骤降，血管收缩易致老年晨峰高血压。每日早餐推荐铁棍山药小米粥搭配黑芝麻核桃粉，补充钾钙与不饱和脂肪酸；炖汤时严禁老火浓肉汤（防高嘌呤与隐形高盐），改用去皮鸡胸肉炖白萝卜或豆腐鲫鱼汤。若老人近期出现晨起头晕或膝关节僵硬加重，建议及时预约心内科或老年科复诊。',
     '老年医学科', '北京协和医院(东单院区)', '赵敏 · 执业护士转岗顾问', '节气药膳食养', 1540, 198, 0, 0
   );
-
   insertArticle.run(
     '视频讲堂', '照护实操',
     '【3分钟视频拆解】家属与陪诊员必学：半失能老人从轮椅安全转移至检查床4步法',
@@ -421,7 +529,6 @@ function seedCommunityArticles() {
     '在医院做心脏彩超、CT或心电图时，老人从轮椅移位到窄检查床是最易发生滑倒的环节。标准SOP四步：第一，轮椅以30~45度角斜靠检查床（优先让老人有力的一侧靠近床沿），双手务必推死左右刹车；第二，翻起双侧脚踏板防绊脚；第三，协助者双膝轻抵老人患侧膝盖作支点；第四，托扶腰带平稳旋转落座。',
     '康复医学科', '北京积水潭医院(新街口院区)', '健康来敲门 · 实训教研组', '3分钟护老视频', 1310, 215, 0, 0
   );
-
   insertArticle.run(
     '慢病预防', '冬季防护',
     '高龄老人冬季「空腹抽血+胃肠镜」防低血糖晕厥清单：降压药到底能不能吃？',
@@ -429,7 +536,6 @@ function seedCommunityArticles() {
     '陪诊一线最常遇到的惊险情况，就是老人因空腹抽血擅自停吃清晨降压药，结果到了医院一量血压180/105mmHg无法做检查！除特殊医嘱外，常规长效降压药应在清晨7点前用一小口白开水（不超过30ml）送服。随身包务必装齐：糖块2颗、温水杯、软面包、当前全部药盒照片及既往化验单。',
     '心内科门诊', '北京协和医院(东单院区)', '李淑芬 · 协和陪诊142单', '诊前防晕厥清单', 1120, 164, 0, 0
   );
-
   insertArticle.run(
     '无障碍攻略', '华西实测',
     '成都华西医院本院带父母看呼吸/老年科：华医通放号时间与第一门诊助老通道攻略',
@@ -446,27 +552,26 @@ function seedOrderEvents() {
     INSERT INTO order_events (order_id, event_type, title, detail, operator, created_at)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
-  ins.run(1, 'CREATED', '创建陪诊预约单', '通过微信小程序创建半天陪诊订单（L2轮椅协助），总价 ¥368', '张晓敏(家属)', '2026-11-12 08:50');
+  ins.run(1, 'CREATED', '创建陪诊预约单并完成微信支付', '微信小程序下单（L2轮椅协助），实付 ¥368，流水号 WX20261112085011', '张晓敏(家属)', '2026-11-12 08:50');
   ins.run(1, 'CONFIRMED', '完成患者本人确认(+)', '方式A：患者本人微信大字卡片一键确认授权并签署国标12+7知情同意书', '张建国(患者本人)', '2026-11-12 09:15');
   ins.run(1, 'DISPATCHED', '智能筛选并指派陪诊师', '指派给【李淑芬 · 北京康护之家(B端机构)】，撮合提成率 8% (¥29.44)', '平台调度中枢', '2026-11-12 09:20');
   ins.run(1, 'STEP_2', '第2步：已到达接手位置打卡', 'LBS核验朝阳区幸福一村3号楼2单元门口，已备好折叠轮椅完成接手核对', '李淑芬(陪诊师)', '2026-11-12 09:45');
 
-  ins.run(2, 'CREATED', '创建陪诊预约单', '通过App客户端创建半天陪诊订单（L3无电梯上下楼背扶），总价 ¥438', '张晓敏(家属)', '2026-11-12 10:18');
+  ins.run(2, 'CREATED', '创建陪诊预约单并完成微信支付', 'App客户端下单（L3无电梯上下楼背扶），实付 ¥438，流水号 WX20261112101899', '张晓敏(家属)', '2026-11-12 10:18');
   ins.run(2, 'CONFIRMED', '完成患者本人确认(+)', '方式B：同住家属在旁，患者同机手写签名授权', '陈秀英(患者本人)', '2026-11-12 10:20');
 }
 
 function upgradeExistingSeedData() {
-  // Ensure 2nd family elder exists for multi-elder switching
   const pCount = db.prepare('SELECT COUNT(*) AS c FROM patients').get().c;
   if (pCount < 2) {
     db.prepare(`
       INSERT INTO patients (
-        name, relation, age, gender, city, birthday, days_to_birthday, weather_alert,
+        owner_user_id, name, relation, age, gender, city, birthday, days_to_birthday, weather_alert,
         mobility_level, mobility_label, chronic_tags, authorized_family, address,
         care_streak, morning_checkin_date, evening_checkin_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
-      '陈秀英', '母亲', 82, '女', '北京', '12月03日', 21,
+      1, '陈秀英', '母亲', 82, '女', '北京', '12月03日', 21,
       '干燥降温提醒：今日室内外温差大，高龄骨质疏松长辈外出复诊请穿防滑软底鞋，备好保温杯。',
       'L3', 'L3 重度受限 · 无电梯上下楼背扶协助 (+¥150)',
       '重度骨质疏松, 右髋关节置换术后, 2型糖尿病',
@@ -476,23 +581,16 @@ function upgradeExistingSeedData() {
     );
   }
 
-  // Ensure at least 7 diary entries for 7-day trend visualization
-  const dCount = db.prepare('SELECT COUNT(*) AS c FROM health_diaries').get().c;
-  if (dCount < 6) {
-    db.exec('DELETE FROM health_diaries');
-    seedSevenDayDiaries();
-  }
-
-  // Upgrade articles to 6 Xiaohongshu-style guide notes if still on 3 old articles
-  const aCount = db.prepare('SELECT COUNT(*) AS c FROM articles').get().c;
-  if (aCount < 6) {
-    db.exec('DELETE FROM articles');
-    seedCommunityArticles();
-  }
+  // Upgrade initial report image to real viewable SVG URL if still placeholder text
+  db.prepare(`
+    UPDATE medical_reports
+    SET report_images = ?
+    WHERE id = 1 AND report_images NOT LIKE '%/uploads/%'
+  `).run(JSON.stringify(['/uploads/sample-lab-report.svg']));
 
   seedOrderEvents();
 }
 
 initDb();
 
-module.exports = { db };
+module.exports = { db, hashPassword, uploadsDir };

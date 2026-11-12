@@ -9,27 +9,45 @@
       }
     },
     {
-      "path": "pages/ai-triage/index",
-      "style": {
-        "navigationBarTitleText": "AI问答与就医推荐(+)"
-      }
-    },
-    {
       "path": "pages/booking/index",
       "style": {
         "navigationBarTitleText": "分级陪诊预约与交通衔接(+)"
       }
     },
     {
-      "path": "pages/patient-confirm/index",
-      "style": {
-        "navigationBarTitleText": "患者本人知情确认与授权(+)"
-      }
-    },
-    {
       "path": "pages/post-visit/index",
       "style": {
         "navigationBarTitleText": "结果分享·医嘱打卡·理赔资料(+)"
+      }
+    },
+    {
+      "path": "pages/care-notes/index",
+      "style": {
+        "navigationBarTitleText": "健康日记与敲门笔记社区(+)"
+      }
+    },
+    {
+      "path": "pages/mine/index",
+      "style": {
+        "navigationBarTitleText": "我的 · 个人中心与合规设置"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "安全登录 / 实名绑定"
+      }
+    },
+    {
+      "path": "pages/ai-triage/index",
+      "style": {
+        "navigationBarTitleText": "AI问答与就医推荐(+)"
+      }
+    },
+    {
+      "path": "pages/patient-confirm/index",
+      "style": {
+        "navigationBarTitleText": "患者本人知情确认与授权(+)"
       }
     },
     {
@@ -41,6 +59,34 @@
       }
     }
   ],
+  "tabBar": {
+    "color": "#6f827d",
+    "selectedColor": "#075e50",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页关怀"
+      },
+      {
+        "pagePath": "pages/booking/index",
+        "text": "预约陪诊"
+      },
+      {
+        "pagePath": "pages/post-visit/index",
+        "text": "医嘱理赔"
+      },
+      {
+        "pagePath": "pages/care-notes/index",
+        "text": "健康笔记"
+      },
+      {
+        "pagePath": "pages/mine/index",
+        "text": "我的"
+      }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "健康来敲门 Everwell",

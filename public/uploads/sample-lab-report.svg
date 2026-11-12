@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340" viewBox="0 0 520 340">
+      <rect width="520" height="340" fill="#faf9f5" stroke="#075e50" stroke-width="3" rx="12"/>
+      <text x="260" y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#075e50">北京协和医院 · 门诊生化检验报告单 (存档件)</text>
+      <line x1="24" y1="54" x2="496" y2="54" stroke="#c5d6ce" stroke-width="1.5"/>
+      <text x="30" y="80" font-size="13" fill="#142c2a">患者姓名：张建国    性别：男    年龄：78岁    科室：心内科门诊</text>
+      <rect x="28" y="96" width="464" height="168" fill="#ffffff" stroke="#dce3dc" rx="6"/>
+      <text x="44" y="124" font-size="12.5" font-weight="bold" fill="#075e50">检验项目                    结果          参考区间         单位</text>
+      <text x="44" y="152" font-size="12.5" fill="#142c2a">空腹血糖 (GLU)              5.8           3.9 - 6.1        mmol/L</text>
+      <text x="44" y="180" font-size="12.5" fill="#142c2a">总胆固醇 (TC)               4.62          2.85 - 5.70      mmol/L</text>
+      <text x="44" y="208" font-size="12.5" fill="#142c2a">低密度脂蛋白 (LDL-C)        2.51          &lt; 3.37           mmol/L</text>
+      <text x="44" y="236" font-size="12.5" fill="#142c2a">血肌酐 (Cr)                 76            57 - 111         μmol/L</text>
+      <text x="30" y="292" font-size="11.5" fill="#5c706b">陪诊顾问现场拍照归档 · GB/T 47801—2026 合规水牌：仅供家属留存，不做诊疗解读</text>
+      <circle cx="445" cy="285" r="32" fill="none" stroke="#d77844" stroke-width="2" stroke-dasharray="4,2"/>
+      <text x="445" y="289" text-anchor="middle" font-size="11" font-weight="bold" fill="#d77844">已核验归档</text>
+    </svg>
