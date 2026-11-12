@@ -81,17 +81,22 @@ everwell-peizhen/
 ├── data/
 │   └── everwell.sqlite                # SQLite3 关系型持久化数据库文件
 ├── server/
-│   ├── db.js                          # 数据库 Schema 定义 (11张核心表) 与初始业务种子数据
-│   ├── index.js                       # Node.js 后端 RESTful API 服务与静态资源服务器
-│   └── test-e2e.js                    # 端到端全链路自动化验收测试脚本 (10项核心闭环断言)
+│   ├── db.js                          # 数据库 Schema 定义 (15张核心生产表) 与初始业务数据
+│   ├── index.js                       # Node.js 后端 RESTful API、RBAC 鉴权与多应用路由网关
+│   └── test-e2e.js                    # 17 项商业生产交付级端到端全链路自动化测试套件
 ├── public/
-│   ├── index.html                     # 四端合一全栈实时联调前端界面 (Web官网 / C端 / 陪诊师端 / 管理后台)
-│   └── app.js                         # 前端状态管理、计费器、5步SOP打卡与后台RBAC交互逻辑
-└── uniapp-mobile-src/                 # 小程序与 iOS/Android App 跨端编译源码配置 (Uni-app Vue3 + TS)
-    ├── manifest.json                  # App URL Scheme (滴滴/高德唤醒) 与微信小程序跳转白名单配置
-    ├── pages.json                     # 移动端页面路由与主题导航配置
-    └── utils/
-        └── platform-bridge.ts         # 条件编译 (#ifdef MP-WEIXIN / #ifdef APP-PLUS) 原生能力桥接层
+│   ├── index.html & web/web-app.js    # 【商业应用1】独立官方品牌商业网站 (/ 与 /web/)
+│   ├── app/                           # 【商业应用2】C端家庭关怀与陪诊独立移动应用/PWA (/app/)
+│   ├── escort/                        # 【商业应用3】持证陪诊师独立执业工作台 App (/escort/)
+│   ├── admin/                         # 【商业应用4】运营总控与B端合作机构 SaaS 管理后台 (/admin/)
+│   ├── workbench.html                 # 四端同屏全链路对照工作台 (/workbench.html)
+│   └── styles.css                     # 零外部 CDN 依赖自包含商业视觉样式系统
+└── uniapp-mobile-src/                 # 【商业应用5】微信小程序与 iOS/Android 完整跨端工程 (全量9页)
+    ├── package.json & tsconfig.json   # Vue 3 + TypeScript + Vite 跨端编译工程配置
+    ├── App.vue & main.ts              # 先逛后登静默鉴权初始化与全局入口
+    ├── manifest.json & pages.json     # 标准5-Tab导航、小程序白名单与原生URL Scheme配置
+    ├── pages/                         # 全量 9 个商业页面 (.vue)：首页/预约/医嘱/笔记/我的/登录/AI导诊/患者确认/陪诊师工作台
+    └── utils/                         # Bearer Token + 401 拦截器 (request.ts) 与滴滴/高德桥接 (platform-bridge.ts)
 ```
 
 ---
@@ -144,7 +149,12 @@ everwell-peizhen/
 cd /Users/SEI/.gemini/antigravity/scratch/everwell-peizhen
 npm start
 ```
-启动成功后，在浏览器打开：**http://localhost:3080** 即可同屏切换体验四大终端视图。
+启动成功后，五大商业交付模块均可独立访问并共享同一 SQLite WAL 实时数据库：
+- **1. 官方品牌商业网站**：`http://localhost:3080/`（或 `http://localhost:3080/web/`）
+- **2. C端家庭关怀与陪诊移动应用 (PWA)**：`http://localhost:3080/app/`
+- **3. 持证陪诊师独立执业工作台 App**：`http://localhost:3080/escort/`
+- **4. 运营总控与 B端合作机构 SaaS 管理后台**：`http://localhost:3080/admin/`
+- *(附)* 四端同屏总览对照页：`http://localhost:3080/workbench.html`
 
 ### 3. 生产级多角色登录与验收测试账号
 系统已实装符合微信小程序规范与 App Store 审核要求的**「先逛后登（Lazy Login）」**及**管理后台 RBAC 独立密码鉴权**：
@@ -157,7 +167,7 @@ npm start
 ```bash
 npm test
 ```
-该命令将自动执行 `server/test-e2e.js` 中的 **15 项生产交付级全链路测试套件**（覆盖多角色鉴权、隐私未勾选拦截、永久注销账号、RBAC 跨机构隔离、非法参数拦截、收银台支付流水闭环、Web 免登查单、真实图片落盘上传、五星评价与售后工单、电子发票及 UTF-8 BOM 财务对账单导出）。
+该命令将自动执行 `server/test-e2e.js` 中的 **17 项商业生产交付级全链路测试套件**（覆盖四大独立商业路由、PWA Manifest、多角色鉴权、隐私未勾选拦截、永久注销账号、RBAC 跨机构隔离、非法参数拦截、收银台支付流水闭环、Web 免登查单、真实图片落盘上传、五星评价与售后工单、电子发票、UTF-8 BOM 财务对账单导出、陪诊师主动抢单与钱包提现、以及 Uni-App 全量 9 个 `.vue` 页面完整性核验）。
 
 ---
 

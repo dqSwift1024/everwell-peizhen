@@ -1,871 +1,385 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>健康来敲门 Everwell · 医疗陪诊平台实际交付全栈系统</title>
-  <link rel="stylesheet" href="/styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>健康来敲门 Everwell · 失能老人就医陪诊与家庭健康关怀官方网站</title>
+  <meta name="description" content="健康来敲门(Everwell)严格遵循国家标准GB/T 47801—2026，面向失能老人与术后行动不便患者提供三甲医院轮椅推行、无电梯背扶、医嘱客观记录与理赔单据归档服务。" />
+  <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
 
-  <!-- ==================== 顶部联调验收工作台切换栏 ==================== -->
-  <header class="global-topbar">
-    <div class="global-topbar-inner">
-      <div class="flex items-center gap-3">
-        <div class="brand-mark">敲</div>
+  <!-- 全局反馈提示条 -->
+  <div id="global-toast" class="toast-banner hidden" role="status" aria-live="polite"></div>
+
+  <!-- 正式商业品牌官网顶部导航栏 -->
+  <header class="web-navbar">
+    <div class="ew-container-wide flex items-center justify-between gap-3" style="padding-top:12px;padding-bottom:12px;flex-wrap:wrap;">
+      <a href="/" class="flex items-center gap-2">
+        <div class="brand-logo" style="width:36px;height:36px;font-size:17px;">敲</div>
         <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="font-extrabold text-sm">健康来敲门 Everwell · 生产交付级全栈系统</span>
-            <span class="sync-pill">
-              <span id="sync-dot-el" class="sync-dot"></span>
-              <span id="sync-status-text">SQLite WAL + RBAC 鉴权运行中</span>
-            </span>
-          </div>
-          <div class="text-xs" style="color:#9ebbb0;">已实装：多端按需登录鉴权 · 支付收银台 · 个人中心与注销合规 · 真图上传 · 评价售后 · 报表导出</div>
+          <div class="font-extrabold text-base text-green">健康来敲门 <span class="text-xs text-muted font-semibold">Everwell.cn</span></div>
+          <div style="font-size:11px;color:var(--ew-subtle);">国家标准 GB/T 47801—2026 合规陪诊平台</div>
         </div>
-      </div>
+      </a>
 
-      <nav class="term-switcher" aria-label="四端验收切换栏">
-        <button type="button" onclick="switchTerminal('web')" id="tab-btn-web" class="term-btn active">
-          <span>1. Web 品牌官网</span>
-        </button>
-        <button type="button" onclick="switchTerminal('c-app')" id="tab-btn-c-app" class="term-btn">
-          <span>2. 小程序/App · C端家庭</span>
-          <span id="nav-badge-capp" class="term-badge">2</span>
-        </button>
-        <button type="button" onclick="switchTerminal('b-app')" id="tab-btn-b-app" class="term-btn">
-          <span>3. 陪诊师接单台</span>
-          <span id="nav-badge-bapp" class="term-badge">1</span>
-        </button>
-        <button type="button" onclick="switchTerminal('admin')" id="tab-btn-admin" class="term-btn">
-          <span>4. 管理与机构后台</span>
-          <span id="nav-badge-admin" class="term-badge">1</span>
-        </button>
+      <nav class="flex items-center gap-1 flex-wrap">
+        <a href="#sec-booking" class="web-nav-link">在线预约</a>
+        <a href="#sec-lookup" class="web-nav-link">查单/开发票</a>
+        <a href="#sec-standard" class="web-nav-link">国标12+7准则</a>
+        <a href="#sec-pricing" class="web-nav-link">透明价格表</a>
+        <a href="#sec-articles" class="web-nav-link">节气与就医专栏</a>
+        <a href="#sec-join" class="web-nav-link">机构/陪诊师招募</a>
       </nav>
-    </div>
 
-    <!-- 主任务全链路闭环向导条 -->
-    <div class="closed-loop-strip">
-      <div class="closed-loop-inner">
-        <div class="loop-steps">
-          <span class="font-bold" style="color:#ffffff;">交付主线闭环：</span>
-          <button type="button" id="loop-step-1" onclick="jumpClosedLoop(1)" class="loop-step-chip">① 登录/预约并收银台支付</button>
-          <span class="loop-arrow">→</span>
-          <button type="button" id="loop-step-2" onclick="jumpClosedLoop(2)" class="loop-step-chip">② 患者本人确认授权(+)</button>
-          <span class="loop-arrow">→</span>
-          <button type="button" id="loop-step-3" onclick="jumpClosedLoop(3)" class="loop-step-chip">③ 后台鉴权登录与派单</button>
-          <span class="loop-arrow">→</span>
-          <button type="button" id="loop-step-4" onclick="jumpClosedLoop(4)" class="loop-step-chip">④ 陪诊师打卡与传真图报告</button>
-          <span class="loop-arrow">→</span>
-          <button type="button" id="loop-step-5" onclick="jumpClosedLoop(5)" class="loop-step-chip">⑤ 查收医嘱/理赔包/评价开票</button>
-        </div>
-        <div id="loop-live-hint" class="text-xs" style="color:#eb9c70;font-weight:700;">点击任一节点直达对应交付环节</div>
+      <div class="flex items-center gap-2 flex-wrap text-xs">
+        <a href="/app/" class="btn-primary" style="padding:8px 14px;">进入 C端家庭版 App</a>
+        <a href="/escort/" class="btn-outline" style="padding:7px 13px;">陪诊师工作台</a>
+        <a href="/admin/" class="btn-soft" style="padding:8px 12px;">机构与运营后台</a>
       </div>
     </div>
   </header>
 
-  <!-- 全局轻提示 Toast -->
-  <div id="global-toast" role="status" aria-live="polite" class="toast-banner hidden"></div>
-
-  <!-- ==================== 终端 1：Web 品牌官网端 ==================== -->
-  <main id="term-web" class="terminal-view" style="flex:1;background:var(--ew-paper);">
-    <div class="web-subnav">
-      <div class="web-subnav-inner">
-        <div class="flex items-center gap-2">
-          <span class="text-xl font-extrabold text-green">健康来敲门</span>
-          <span class="badge badge-green">Everwell 家庭就医协助平台</span>
+  <!-- 首屏 Hero + 右侧 10 秒预约与收银台直通车 -->
+  <section id="sec-booking" style="background:linear-gradient(135deg,#0b2924 0%,#075e50 60%,#124a40 100%);color:#fff;padding:48px 0;">
+    <div class="ew-container-wide md-split-12" style="align-items:start;">
+      <div class="space-y-4">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="badge" style="background:rgba(215,120,68,0.95);color:#fff;padding:5px 12px;">2026 国家标准《GB/T 47801—2026》全流程对标</span>
+          <span class="badge" style="background:rgba(255,255,255,0.16);color:#dff0e7;padding:5px 12px;">100% 持健康证与养老护理证上岗</span>
         </div>
-        <nav class="web-nav-links hide-mobile">
-          <a href="#web-hero">品牌首页</a>
-          <a href="#web-pricing">透明分级价目表</a>
-          <a href="#web-booking" class="text-orange font-extrabold">在线预约与查单</a>
-          <a href="#web-articles">无障碍攻略与食养(+)</a>
-          <a href="#web-join">机构与陪诊师招募</a>
-        </nav>
-        <div class="flex items-center gap-2">
-          <a href="#web-lookup-box" class="btn-soft">查预约单进度</a>
-          <button type="button" onclick="switchTerminal('c-app')" class="btn-outline">打开小程序/App</button>
+        <h1 class="text-3xl font-extrabold" style="color:#fff;line-height:1.26;margin:0;">
+          让健康有人关心，<br />让行动不便的父母就医有人帮忙。
+        </h1>
+        <p style="font-size:15px;color:#cde4da;line-height:1.75;margin:0;">
+          专为<strong>高龄失能、轮椅出行、老小区无电梯上下楼及异地子女无法请假陪同</strong>家庭打造。提供从上门安全接手、三甲医院共享轮椅推行、诊室客观医嘱记录到商业险理赔票据归档的全闭环陪护。
+        </p>
+
+        <div class="grid-4 text-center" style="gap:10px;padding-top:8px;">
+          <div class="ew-card" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;padding:14px 8px;">
+            <div class="text-xl font-extrabold" id="hero-stat-escorts">100%</div>
+            <div style="font-size:11.5px;color:#c7e0d5;">双证核验准入</div>
+          </div>
+          <div class="ew-card" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;padding:14px 8px;">
+            <div class="text-xl font-extrabold">L0-L3</div>
+            <div style="font-size:11.5px;color:#c7e0d5;">失能分级明码标价</div>
+          </div>
+          <div class="ew-card" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;padding:14px 8px;">
+            <div class="text-xl font-extrabold">5 步</div>
+            <div style="font-size:11.5px;color:#c7e0d5;">LBS定位与真图留痕</div>
+          </div>
+          <div class="ew-card" style="background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.18);color:#fff;padding:14px 8px;">
+            <div class="text-xl font-extrabold">¥0 押金</div>
+            <div style="font-size:11.5px;color:#c7e0d5;">合作机构前3年免押</div>
+          </div>
+        </div>
+
+        <div class="ew-card" style="background:rgba(12,35,30,0.55);border-color:rgba(255,255,255,0.2);color:#e4f2ec;padding:16px;">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div class="font-extrabold text-sm" style="color:#fff;">推荐使用「C端家庭照护移动应用」体验完整 15 项守护功能</div>
+              <div class="text-xs mt-1" style="color:#b8d6ca;">支持 AI 诊前导诊、多长辈血压血糖 7 日曲线、医嘱服药打卡、实拍报告查验与滴滴/高德无障碍打车唤醒</div>
+            </div>
+            <a href="/app/" class="btn-orange whitespace-nowrap">打开 C端家庭版 →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：官网在线快速预约单 -->
+      <div class="ew-card" style="color:var(--ew-ink);border:2px solid #9fd0b9;">
+        <div class="flex items-center justify-between mb-2">
+          <div>
+            <span class="badge badge-green">官网极速预约通道</span>
+            <h2 class="text-lg font-extrabold mt-1" style="margin-bottom:0;">在线预约三甲医院专人陪诊</h2>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-subtle">预估总费用</div>
+            <div id="wb-live-price" class="text-2xl font-extrabold text-orange">¥368</div>
+          </div>
+        </div>
+
+        <form onsubmit="handleWebOrderSubmit(event)" class="space-y-2.5 text-xs">
+          <div class="grid-2" style="gap:10px;">
+            <div>
+              <label class="font-bold mb-1" style="display:block;">就诊长辈姓名与年龄 *</label>
+              <input id="wb-patient" required value="张建国 (78岁)" class="w-full" />
+            </div>
+            <div>
+              <label class="font-bold mb-1" style="display:block;">家属联系手机号 (11位) *</label>
+              <input id="wb-phone" required pattern="1[3-9][0-9]{9}" title="请输入11位中国大陆手机号" value="13800138000" class="w-full" />
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap:10px;">
+            <div>
+              <label class="font-bold mb-1" style="display:block;">就诊目标医院 *</label>
+              <select id="wb-hospital" onchange="syncWebHospitalCity()" class="w-full font-bold">
+                <option value="北京协和医院(东单院区)" data-city="北京">北京 · 北京协和医院(东单院区)</option>
+                <option value="北京积水潭医院(新街口院区)" data-city="北京">北京 · 北京积水潭医院(新街口院区)</option>
+                <option value="四川大学华西医院(本院)" data-city="成都">成都 · 四川大学华西医院(本院)</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold mb-1" style="display:block;">挂号科室 &amp; 期望就诊日 *</label>
+              <div class="flex gap-1-5">
+                <input id="wb-dept" required value="心内科门诊" class="w-full" />
+                <input id="wb-date" type="date" required value="2026-11-16" class="w-full" />
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap:10px;">
+            <div>
+              <label class="font-bold mb-1" style="display:block;">服务时长与挂号状态 *</label>
+              <select id="wb-pkg" onchange="recalcWebPrice()" class="w-full">
+                <option value="288|半天陪诊 (4小时标准服务)|已挂好号">半天陪诊 4h (¥288) · 已挂好号</option>
+                <option value="288|半天陪诊 (4小时标准服务)|需人工协助挂号">半天陪诊 4h (¥288) · 需协助挂号</option>
+                <option value="498|全天陪诊 (8小时深度陪同)|已挂好号">全天陪诊 8h (¥498) · 含跨科检查</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold mb-1" style="display:block;">患者行动能力分级 *</label>
+              <select id="wb-mobility" onchange="recalcWebPrice()" class="w-full font-bold text-green">
+                <option value="80|L2 需轮椅代借与推行">L2 需轮椅代借与推行 (+¥80)</option>
+                <option value="50|L1 需全程搀扶看护">L1 需全程搀扶防跌看护 (+¥50)</option>
+                <option value="150|L3 无电梯上下楼背扶">L3 老楼无电梯上下楼背扶 (+¥150)</option>
+                <option value="0|L0 患者基本自理">L0 患者基本自理 (+¥0)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2" style="gap:10px;">
+            <input id="wb-pickup" required value="北京市朝阳区幸福一村3号楼2单元301" class="w-full" placeholder="上门接手详细地址 *" />
+            <input id="wb-dropoff" required value="就诊结束后安全送回原址家中交接" class="w-full" placeholder="结束送回交接地址 *" />
+          </div>
+
+          <label class="flex items-start gap-2 text-muted" style="cursor:pointer;">
+            <input type="checkbox" id="wb-agree-chk" required style="width:15px;height:15px;margin-top:2px;" />
+            <span>我已获就诊长辈本人知情同意，并阅读同意<button type="button" onclick="openLegalDoc('service')" class="text-green font-bold">《GB/T 47801—2026 陪诊服务边界告知书》</button>与<button type="button" onclick="openLegalDoc('privacy')" class="text-green font-bold">《医疗健康隐私保护政策》</button>。</span>
+          </label>
+
+          <button type="submit" id="wb-submit-btn" class="btn-primary w-full" style="padding:12px;font-size:14px;">
+            提交预约并前往安全收银台支付 →
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块 2：官网免登录订单进度查询、补支付与电子发票开具 -->
+  <section id="sec-lookup" class="py-10">
+    <div class="ew-container-wide space-y-4">
+      <div class="ew-card space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span class="badge badge-green">订单进度与电子发票自助中心</span>
+            <h2 class="text-xl font-extrabold mt-1" style="margin-bottom:0;">凭手机号或订单号查询实时履约进度 · 在线补支付 · 申请电子发票</h2>
+          </div>
+          <button type="button" onclick="openInvoiceModal()" class="btn-outline text-xs">申请增值税普通电子发票</button>
+        </div>
+
+        <form onsubmit="handleWebOrderLookup(event)" class="flex gap-2 flex-wrap">
+          <input id="wb-lookup-input" value="13800138000" placeholder="请输入 11 位预订手机号或 EW 开头订单号" class="text-sm" style="flex:1;min-width:240px;" />
+          <button type="submit" id="wb-lookup-btn" class="btn-primary">立即查询订单状态</button>
+        </form>
+
+        <div id="wb-lookup-results" class="space-y-2 text-xs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 模块 3：GB/T 47801—2026 国家标准 12 项准做 + 7 项严禁 -->
+  <section id="sec-standard" class="py-6">
+    <div class="ew-container-wide space-y-4">
+      <div class="text-center space-y-1">
+        <span class="badge badge-green">合规立身 · 绝不触碰医疗与号源红线</span>
+        <h2 class="text-2xl font-extrabold" style="margin:6px 0 0;">严格执行《GB/T 47801—2026 社会化陪同就医服务基本要求》</h2>
+      </div>
+
+      <div class="md-split-12 text-xs">
+        <div class="ew-card space-y-2" style="border-top:4px solid var(--ew-green);">
+          <div class="text-base font-extrabold text-green">✓ 平台标准承诺：12 项非医疗生活与流程辅助（准做）</div>
+          <div class="grid-2" style="gap:8px;">
+            <div class="ew-card-mint">1. 诊前携带资料与空腹准备提醒</div>
+            <div class="ew-card-mint">2. 居家上门或医院无障碍落客区接手</div>
+            <div class="ew-card-mint">3. 滴滴/高德助老打车路线衔接协助</div>
+            <div class="ew-card-mint">4. 院内共享轮椅租借、消毒与全程推行</div>
+            <div class="ew-card-mint">5. 自助机预约取号、分诊台报到排队</div>
+            <div class="ew-card-mint">6. 诊室陪同沟通与辅助长辈清晰陈述</div>
+            <div class="ew-card-mint">7. <strong>医生原话医嘱客观记录（零主观篡改）</strong></div>
+            <div class="ew-card-mint">8. 检验、影像拍片跨楼层陪同防跌看护</div>
+            <div class="ew-card-mint">9. 门诊自助缴费与药房核对取药协助</div>
+            <div class="ew-card-mint">10. 门诊发票、病历页与商业险理赔单整理</div>
+            <div class="ew-card-mint">11. 就诊结束安全护送回家当面交接</div>
+            <div class="ew-card-mint">12. 诊后每日服药提醒与下次复检倒计时</div>
+          </div>
+        </div>
+
+        <div class="ew-card space-y-2" style="border-top:4px solid var(--ew-danger);">
+          <div class="text-base font-extrabold text-danger">✕ 高压合规红线：7 项严禁越界医疗与违法行为（禁做）</div>
+          <div class="space-y-2">
+            <div class="ew-card-paper"><strong>严禁 1（反黄牛）：</strong>严禁任何形式囤积、倒卖医院专家号源或加价抢号；</div>
+            <div class="ew-card-paper"><strong>严禁 2（非诊疗）：</strong>严禁陪诊员擅自解读化验单指标、判断病情或给出诊疗建议；</div>
+            <div class="ew-card-paper"><strong>严禁 3（尊医嘱）：</strong>严禁篡改、增删医生开具的处方用法或口头医嘱；</div>
+            <div class="ew-card-paper"><strong>严禁 4（零推销）：</strong>严禁向老人及家属推销任何保健品、偏方或非医嘱药品器械；</div>
+            <div class="ew-card-paper"><strong>严禁 5（禁代签）：</strong>严禁代患者或家属签署手术、麻醉、有创检查等医疗法律文书；</div>
+            <div class="ew-card-paper"><strong>严禁 6（护隐私）：</strong>严禁泄露患者病历、住址与家庭隐私（报告仅授权亲属可见）；</div>
+            <div class="ew-card-paper"><strong>严禁 7（禁私单）：</strong>严禁索要红包或引导脱离平台监管的私下现金交易。</div>
+          </div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- Hero -->
-    <section id="web-hero" class="web-hero-bg">
-      <div class="ew-container md-split-hero">
-        <div class="space-y-4">
-          <div class="flex flex-wrap gap-2">
-            <span class="badge badge-green">严格执行 GB/T 47801—2026 国家标准</span>
-            <span class="badge badge-orange">专注失能老人与行动受限患者</span>
-          </div>
-          <h1 class="text-3xl font-extrabold" style="line-height:1.24;margin:8px 0;">
-            让健康有人关心，<span class="text-green">让父母就医有人帮忙</span>
-          </h1>
-          <p class="text-sm text-muted" style="max-width:660px;margin:0;">
-            围绕低行动能力长辈（搀扶、轮椅代借推行、无电梯老楼上下楼、术后复检）与异地子女，连接医院合规护工机构与自有持证陪诊顾问，提供从接手核验、院内陪诊、医生原话客观记录、理赔资料打包到诊后每日服药关怀的全闭环服务。
-          </p>
-          <div class="flex flex-wrap gap-2">
-            <span class="badge badge-gray">✓ 家属代约 · 患者本人确认授权(+)</span>
-            <span class="badge badge-gray">✓ 护理证与健康证双证公示</span>
-            <span class="badge badge-gray">✓ 严守国标12项可做与7项医疗禁区</span>
-            <span class="badge badge-gray">✓ 撮合提成≤10% · 前3年免收押金</span>
-          </div>
-          <div class="flex flex-wrap gap-3 pt-1">
-            <a href="#web-booking" class="btn-primary" style="padding:12px 24px;font-size:14px;">立即在线预约陪诊</a>
-            <button type="button" onclick="switchTerminal('c-app')" class="btn-outline" style="padding:12px 22px;font-size:14px;">进入小程序/App完整体验 →</button>
-          </div>
-        </div>
-
-        <div class="ew-card text-center" style="max-width:320px;margin:0 auto;width:100%;">
-          <div onclick="switchTerminal('c-app')" style="width:152px;height:152px;margin:0 auto;border-radius:16px;background:var(--ew-mint-soft);border:2px dashed var(--ew-green);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;cursor:pointer;">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#075e50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
-            <div class="text-xs font-extrabold text-green mt-2">扫码或点击打开小程序/App</div>
-            <div class="text-xs text-muted mt-1">支持游客先浏览 · 下单按需一键登录</div>
-          </div>
-          <div class="font-extrabold text-sm text-green mt-3">多端手机号/微信 UnionID 互通</div>
-          <div class="text-xs text-muted mt-1">子女异地代下单，父母微信一键大字确认</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 透明分级价目表 -->
-    <section id="web-pricing" class="ew-container py-10">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <div>
-          <span class="text-xs font-extrabold text-orange">TRANSPARENT TIERED PRICING</span>
-          <h2 class="text-2xl font-extrabold mt-1" style="margin-bottom:4px;">服务价目与低行动能力分级标准</h2>
-          <p class="text-xs text-muted" style="margin:0;">明码标价，无隐形消费；医院挂号费、检查药费及滴滴/高德实际车费由用户自行支付</p>
-        </div>
-        <div class="ew-card-mint text-xs font-semibold text-green">
-          阶梯退改规则：距服务 &gt;48h 免费退 ｜ 8~48h 扣10% ｜ 4~8h 扣20% ｜ &lt;4h 扣50% ｜ 超时加钟 ¥100/小时
-        </div>
+  <!-- 模块 4：一至四线城市与 L0~L3 失能分级透明定价表 -->
+  <section id="sec-pricing" class="py-10">
+    <div class="ew-container-wide space-y-4">
+      <div class="text-center">
+        <span class="badge badge-orange">明码标价 · 平台撮合提成严格 ≤10% 让利护工与家庭</span>
+        <h2 class="text-2xl font-extrabold mt-1">全国分城市基础时长套餐 + L0~L3 失能照护分级收费标准</h2>
       </div>
 
-      <div class="ew-card overflow-x-auto" style="padding:0;">
-        <table class="pricing-table">
+      <div class="ew-card overflow-x-auto text-xs">
+        <table style="width:100%;min-width:760px;border-collapse:collapse;">
           <thead>
-            <tr>
-              <th>服务项目 / 分级维度</th>
-              <th>一线城市 (北上广深)</th>
-              <th>二线省会 (成杭武西等)</th>
-              <th>三/四线城市</th>
-              <th>服务交付标准 (GB/T 47801—2026 规范)</th>
+            <tr style="background:var(--ew-paper);border-bottom:2px solid var(--ew-line);text-align:left;">
+              <th style="padding:12px;">城市分级</th>
+              <th style="padding:12px;">半天标准陪诊 (4小时)</th>
+              <th style="padding:12px;">全天深度陪诊 (8小时)</th>
+              <th style="padding:12px;">失能分级护理加价 (L0~L3)</th>
+              <th style="padding:12px;">超时补差价 &amp; 阶梯退改规则</th>
             </tr>
           </thead>
           <tbody>
-            <tr class="section-row"><td colspan="5">一、基础时长套餐</td></tr>
-            <tr>
-              <td class="font-bold">半天陪诊 (4小时标准服务)</td>
-              <td class="font-extrabold text-orange">¥288 / 次</td>
-              <td class="font-bold">¥238 / 次</td>
-              <td>¥198 / 次</td>
-              <td class="text-muted">诊前准备梳理、约定点接手、取号候诊、陪同面诊客观记医嘱、缴费取药、理赔单归档与结果分享</td>
+            <tr style="border-bottom:1px solid var(--ew-line);">
+              <td style="padding:12px;" class="font-extrabold text-green">一线城市（北京 / 上海 / 广州 / 深圳）</td>
+              <td style="padding:12px;" class="font-bold">¥288 / 次</td>
+              <td style="padding:12px;" class="font-bold">¥498 / 次</td>
+              <td style="padding:12px;" rowspan="3">
+                <div><strong>L0 基本自理：</strong>+¥0（院内流程引导）</div>
+                <div><strong>L1 轻度受限：</strong>+¥50（全程防跌搀扶看护）</div>
+                <div class="text-green font-bold"><strong>L2 中度失能：</strong>+¥60~¥80（共享轮椅代借消毒与推行）</div>
+                <div class="text-orange font-bold"><strong>L3 重度受限：</strong>+¥120~¥150（老旧小区无电梯背扶上下楼）</div>
+              </td>
+              <td style="padding:12px;" rowspan="3">
+                <div><strong>超时加钟：</strong>超出套餐时长按 ¥100/小时在线透明补缴；</div>
+                <div><strong>&gt;48小时取消：</strong>0 违约金，100% 全额原路退回；</div>
+                <div><strong>8~48小时取消：</strong>扣 10% 排班留档补贴；</div>
+                <div><strong>4~8h / &lt;4h 临期取消：</strong>分别扣 20% / 50% 空置补贴。</div>
+              </td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--ew-line);">
+              <td style="padding:12px;" class="font-extrabold text-green">新一线及省会（成都 / 杭州 / 武汉 / 南京）</td>
+              <td style="padding:12px;" class="font-bold">¥238 / 次</td>
+              <td style="padding:12px;" class="font-bold">¥418 / 次</td>
             </tr>
             <tr>
-              <td class="font-bold">全天陪诊 (8小时深度陪同)</td>
-              <td class="font-extrabold text-orange">¥498 / 次</td>
-              <td class="font-bold">¥418 / 次</td>
-              <td>¥358 / 次</td>
-              <td class="text-muted">覆盖上下午跨科室多项大型检查（胃肠镜/增强CT等）、输液留观陪同、全套医嘱执行打卡与复检衔接</td>
-            </tr>
-            <tr class="section-row"><td colspan="5">二、行动协助分级附加费 (按长辈实际行动能力透明叠加)</td></tr>
-            <tr>
-              <td class="font-bold">L1 轻度受限 · 全程搀扶防跌倒看护</td>
-              <td class="font-semibold">+ ¥50</td>
-              <td>+ ¥40</td>
-              <td>+ ¥30</td>
-              <td class="text-muted">上下车搀扶、院内台阶与湿滑地面防跌倒保护、诊室慢行陪同</td>
-            </tr>
-            <tr>
-              <td class="font-bold">L2 中度失能 · 轮椅代借与无障碍推行</td>
-              <td class="font-semibold text-green">+ ¥80</td>
-              <td>+ ¥60</td>
-              <td>+ ¥50</td>
-              <td class="text-muted">提前到院代借共享轮椅、无障碍通道推行、检查床4步安全移位辅助</td>
-            </tr>
-            <tr>
-              <td class="font-bold">L3 重度受限 · 无电梯上下楼背扶/双人协同</td>
-              <td class="font-semibold text-orange">+ ¥150</td>
-              <td>+ ¥120</td>
-              <td>+ ¥100</td>
-              <td class="text-muted">老旧小区无电梯楼层上下楼背扶协助、术后重度行动受限安全交接</td>
+              <td style="padding:12px;" class="font-extrabold text-green">二三四线地市三甲医院</td>
+              <td style="padding:12px;" class="font-bold">¥168 ~ ¥198 / 次</td>
+              <td style="padding:12px;" class="font-bold">¥298 ~ ¥358 / 次</td>
             </tr>
           </tbody>
         </table>
       </div>
-    </section>
-
-    <!-- Web 在线预约 + 免登录订单进度查询 + 种草攻略 + 招募 -->
-    <section id="web-booking" class="ew-container md-split-12" style="padding-bottom:52px;">
-      <!-- 左栏：快速预约 + 免登录订单查询闭环 -->
-      <div class="space-y-4">
-        <div class="ew-card" style="border:2px solid var(--ew-green);">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <span class="badge badge-green">免注册快速预约 · 提交即唤起收银台</span>
-              <h3 class="text-lg font-extrabold mt-1" style="margin-bottom:0;">Web 在线快速预约陪诊</h3>
-            </div>
-            <div class="text-right">
-              <div class="text-xs text-muted">应付总额</div>
-              <div id="wb-live-price" class="text-xl font-extrabold text-orange">¥368</div>
-            </div>
-          </div>
-
-          <form id="web-booking-form" onsubmit="handleWebOrderSubmit(event)" class="space-y-3 text-xs">
-            <div class="grid-2">
-              <div>
-                <label class="font-bold mb-1" style="display:block;">就诊长辈姓名与年龄 <span class="text-danger">*</span></label>
-                <input id="wb-patient" required value="张建国 (78岁)" class="w-full" />
-              </div>
-              <div>
-                <label class="font-bold mb-1" style="display:block;">家属 11 位手机号 <span class="text-danger">*</span></label>
-                <input id="wb-phone" required pattern="1[3-9][0-9]{9}" title="请输入11位中国大陆手机号" value="13800138000" class="w-full" />
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div>
-                <label class="font-bold mb-1" style="display:block;">目标三甲医院 <span class="text-danger">*</span></label>
-                <select id="wb-hospital" onchange="syncWebHospitalCity()" class="w-full font-semibold">
-                  <option value="北京协和医院(东单院区)" data-city="北京">北京 · 北京协和医院(东单院区)</option>
-                  <option value="北京积水潭医院(新街口院区)" data-city="北京">北京 · 北京积水潭医院(新街口院区)</option>
-                  <option value="四川大学华西医院(本院)" data-city="成都">成都 · 四川大学华西医院(本院)</option>
-                </select>
-              </div>
-              <div>
-                <label class="font-bold mb-1" style="display:block;">就诊科室与日期 <span class="text-danger">*</span></label>
-                <div class="grid-2" style="gap:6px;">
-                  <input id="wb-dept" required value="心内科门诊" class="w-full" />
-                  <input id="wb-date" type="date" required value="2026-11-16" class="w-full" />
-                </div>
-              </div>
-            </div>
-
-            <div class="grid-2">
-              <div>
-                <label class="font-bold mb-1" style="display:block;">服务套餐与挂号状态(+)</label>
-                <select id="wb-pkg" onchange="recalcWebPrice()" class="w-full">
-                  <option value="288|半天陪诊 (4小时标准服务)|已挂好号">半天4h (¥288 · 已挂好号)</option>
-                  <option value="288|半天陪诊 (4小时标准服务)|需人工协助挂号">半天4h (¥288 · 需协助挂号)</option>
-                  <option value="498|全天陪诊 (8小时深度陪同)|已挂好号">全天8h (¥498 · 已挂好号)</option>
-                </select>
-              </div>
-              <div>
-                <label class="font-bold mb-1" style="display:block;">长辈行动能力分级 <span class="text-danger">*</span></label>
-                <select id="wb-mobility" onchange="recalcWebPrice()" class="w-full font-bold text-green">
-                  <option value="80|L2 需轮椅代借与推行">L2 轮椅代借与推行 (+¥80)</option>
-                  <option value="50|L1 需全程搀扶看护">L1 全程搀扶看护 (+¥50)</option>
-                  <option value="150|L3 无电梯上下楼背扶">L3 无电梯上下楼背扶 (+¥150)</option>
-                  <option value="0|L0 患者基本自理">L0 基本自理 (+¥0)</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="font-bold mb-1" style="display:block;">接手位置与结束交接位置 (位置选择+)</label>
-              <input id="wb-pickup" required value="朝阳区幸福一村3号楼2单元301(无电梯3楼)" class="w-full mb-2" />
-              <input id="wb-dropoff" required value="就诊结束后安全送回幸福一村家中交接" class="w-full" />
-            </div>
-
-            <label class="flex items-start gap-2 text-muted" style="cursor:pointer;">
-              <input type="checkbox" checked required style="width:16px;height:16px;margin-top:2px;" />
-              <span>我已阅读并同意<button type="button" onclick="openLegalDoc('service')" class="text-green font-bold">《GB/T 47801—2026 陪诊服务告知书》</button>与<button type="button" onclick="openLegalDoc('privacy')" class="text-green font-bold">《医疗隐私政策》</button>。</span>
-            </label>
-
-            <button type="submit" id="wb-submit-btn" class="btn-primary w-full" style="padding:12px;">
-              提交预约并拉起收银台支付 →
-            </button>
-          </form>
-        </div>
-
-        <!-- 补齐 Web 免登录查单闭环 -->
-        <div id="web-lookup-box" class="ew-card space-y-2.5 text-xs">
-          <div class="flex items-center justify-between">
-            <span class="font-extrabold text-sm text-green">Web 预约单进度查询与补支付</span>
-            <span class="text-subtle">免下载App · 凭手机号或单号即查</span>
-          </div>
-          <form onsubmit="handleWebOrderLookup(event)" class="flex gap-2">
-            <input id="wb-lookup-input" required value="13800138000" placeholder="输入11位预约手机号 或 EW开头订单号" class="w-full" />
-            <button type="submit" id="wb-lookup-btn" class="btn-outline whitespace-nowrap">查询订单</button>
-          </form>
-          <div id="wb-lookup-results" class="space-y-2"></div>
-        </div>
-      </div>
-
-      <!-- 右栏：种草攻略 + 机构/陪诊员招募 -->
-      <div class="space-y-5">
-        <div id="web-articles" class="ew-card">
-          <div class="flex items-center justify-between mb-3">
-            <div>
-              <h3 class="text-base font-extrabold text-green" style="margin:0;">就医无障碍攻略与节气食养笔记 (+)</h3>
-              <div class="text-xs text-muted">一线持证陪诊师实景踩点 · 与小程序种草社区实时同步</div>
-            </div>
-            <button type="button" onclick="switchTerminal('c-app');switchCAppTab('care')" class="btn-soft">全部笔记 →</button>
-          </div>
-          <div id="web-articles-container" class="space-y-2 text-xs"></div>
-        </div>
-
-        <div id="web-join" class="ew-card" style="background:var(--ew-forest);color:#ffffff;border-color:#264d45;">
-          <div class="flex items-center justify-between mb-2">
-            <span class="badge badge-orange" style="background:var(--ew-orange);color:#fff;">全国运力招募 · 前3年免收押金</span>
-            <span class="text-xs" style="color:#a7c4b9;">平台撮合提成 ≤10%</span>
-          </div>
-          <h3 class="text-base font-extrabold" style="margin:4px 0 10px;">合作护工机构(B端) &amp; 持证陪诊师入驻通道</h3>
-          <form onsubmit="handleWebJoinSubmit(event)" class="grid-2 text-xs" style="color:var(--ew-ink);">
-            <select id="join-type" class="font-bold">
-              <option value="ORG">B端陪护/家政机构入驻</option>
-              <option value="ESCORT">个人持证陪诊师报名</option>
-            </select>
-            <input id="join-name" required placeholder="机构名称 或 个人姓名 *" />
-            <input id="join-phone" required pattern="1[3-9][0-9]{9}" title="请输入11位手机号" placeholder="联系电话 (11位手机号) *" />
-            <input id="join-city" required value="北京" placeholder="服务城市 *" />
-            <input id="join-qual" required placeholder="资质说明 (如：在册护工25人 / 持养老护理员证+健康证) *" class="col-span-2" />
-            <button type="submit" id="join-submit-btn" class="btn-orange col-span-2" style="padding:10px;">
-              提交入驻申请（后台审批通过后即可凭该手机号登录陪诊师端）
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- ==================== 终端 2：小程序 / App (C端家庭模式 - 含按需登录、收银台、我的个人中心) ==================== -->
-  <main id="term-c-app" class="terminal-view hidden py-6" style="flex:1;">
-    <div class="ew-container lg-workbench-grid">
-
-      <!-- 左侧：15项 (+) 功能与交付基础设施检视台 -->
-      <aside class="ew-card space-y-3">
-        <div class="flex items-center justify-between">
-          <span class="badge badge-green">遵循微信 &amp; App Store 审核规范</span>
-          <span class="badge badge-orange">15项(+) + 交付基座全齐</span>
-        </div>
-        <h2 class="text-lg font-extrabold" style="margin:4px 0;">C端家庭模式 · 交付级全功能导览</h2>
-        <p class="text-xs text-muted" style="margin:0;">支持<strong>「未登录游客先逛、触发私有操作时自动弹出按需登录窗」</strong>，严格符合微信与苹果过审红线：</p>
-
-        <div class="space-y-2 text-xs">
-          <div class="font-extrabold text-muted">一、账号、收银台与个人合规基座（新补齐）</div>
-          <div class="grid-2" style="gap:7px;">
-            <button type="button" onclick="openMobileLoginModal('FAMILY')" class="btn-outline justify-between"><span>小程序/App 登录窗</span><span>体验 →</span></button>
-            <button type="button" onclick="switchCAppTab('mine')" class="btn-outline justify-between"><span>「我的」与账号注销</span><span>体验 →</span></button>
-            <button type="button" onclick="openInvoiceModal()" class="btn-soft justify-between"><span>电子发票开具申请</span><span class="text-green">→</span></button>
-            <button type="button" onclick="openLegalDoc('privacy')" class="btn-soft justify-between"><span>医疗隐私政策全文</span><span class="text-green">→</span></button>
-          </div>
-
-          <div class="font-extrabold text-muted pt-1">二、15项 (+) 必做核心与扩展闭环</div>
-          <div class="grid-2" style="gap:7px;">
-            <button type="button" onclick="switchCAppTab('ai')" class="btn-soft justify-between"><span>1. AI问答与就医推荐(+)</span><span class="text-green">→</span></button>
-            <button type="button" onclick="switchCAppTab('home')" class="btn-soft justify-between"><span>2/12. 关怀与体检推荐(+)</span><span class="text-green">→</span></button>
-            <button type="button" onclick="switchCAppTab('book')" class="btn-soft justify-between"><span>3/4/5. 预约/挂号/滴滴(+)</span><span class="text-green">→</span></button>
-            <button type="button" onclick="openPatientConfirmForLatest()" class="btn-soft justify-between"><span>6. 患者本人确认(+)</span><span class="text-orange">→</span></button>
-            <button type="button" onclick="switchCAppTab('post')" class="btn-soft justify-between"><span>7/8/9. 医嘱/打卡/购药(+)</span><span class="text-green">→</span></button>
-            <button type="button" onclick="switchCAppTab('post')" class="btn-soft justify-between"><span>10/11. 复检与理赔包(+)</span><span class="text-green">→</span></button>
-            <button type="button" onclick="switchCAppTab('care')" class="btn-soft col-span-2 justify-between"><span>13/14/15. 7日体征趋势图 + 种草攻略笔记社区(+)</span><span class="text-green">→</span></button>
-          </div>
-        </div>
-
-        <button type="button" onclick="switchTerminal('b-app')" class="btn-primary w-full" style="background:var(--ew-forest);">
-          切换至【3. 陪诊师接单台】（含持证手机号准入校验）→
-        </button>
-      </aside>
-
-      <!-- 右侧：iPhone 交付运行容器 -->
-      <section>
-        <div class="phone-frame">
-          <div class="phone-status-bar">
-            <span>09:41</span>
-            <div class="phone-notch-pill"></div>
-            <span id="capp-auth-status-pill">已登录</span>
-          </div>
-
-          <!-- 手机头部 + 登录态入口 + 多长辈档案切换 -->
-          <div class="phone-header">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="font-extrabold text-base">健康来敲门</span>
-                <button type="button" id="capp-header-user-btn" onclick="handleHeaderUserClick()" class="badge" style="background:rgba(255,255,255,0.2);color:#fff;cursor:pointer;padding:3px 8px;">
-                  张晓敏 · 已登录
-                </button>
-              </div>
-              <button type="button" onclick="openEmergencySos()" class="badge" style="background:#c53939;color:#fff;padding:4px 9px;cursor:pointer;" title="突发状况一键呼救">
-                SOS 急救/客服
-              </button>
-            </div>
-            <div id="capp-elder-switcher" class="elder-switcher-row"></div>
-          </div>
-
-          <!-- 手机中部滚动区 -->
-          <div class="phone-body">
-
-            <!-- 子视图 1: 首页关怀与主线任务 (home) -->
-            <div id="capp-view-home" class="capp-subview space-y-3">
-              <div id="capp-care-hero" class="care-hero-card"></div>
-
-              <div class="ew-card" style="padding:14px;border:1.5px solid #bedbd0;">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <span class="badge badge-orange">主线核心服务 · 持证护工与陪诊员</span>
-                    <h3 class="text-sm font-extrabold mt-1" style="margin-bottom:0;">为长辈预约三甲医院专人陪诊</h3>
-                  </div>
-                  <button type="button" onclick="switchCAppTab('book')" class="btn-primary" style="padding:8px 14px;font-size:12px;">
-                    立即预约 →
-                  </button>
-                </div>
-                <div class="grid-4 mt-3 text-center text-xs" style="gap:7px;">
-                  <button type="button" onclick="prefillBookingLevel('50|L1 需全程搀扶看护')" class="ew-card-paper" style="padding:9px 4px;">
-                    <div class="font-extrabold text-green">L1 搀扶</div>
-                    <div class="text-subtle" style="font-size:10.5px;">防跌看护 +¥50</div>
-                  </button>
-                  <button type="button" onclick="prefillBookingLevel('80|L2 需轮椅代借与推行')" class="ew-card-mint" style="padding:9px 4px;">
-                    <div class="font-extrabold text-green">L2 轮椅</div>
-                    <div class="text-green" style="font-size:10.5px;">代借推行 +¥80</div>
-                  </button>
-                  <button type="button" onclick="prefillBookingLevel('150|L3 无电梯上下楼背扶')" class="ew-card-paper" style="padding:9px 4px;">
-                    <div class="font-extrabold text-orange">L3 上下楼</div>
-                    <div class="text-subtle" style="font-size:10.5px;">老楼背扶 +¥150</div>
-                  </button>
-                  <button type="button" onclick="switchCAppTab('ai')" class="ew-card-paper" style="padding:9px 4px;background:var(--ew-orange-soft);border-color:#f4cdb4;">
-                    <div class="font-extrabold text-orange">AI 导诊</div>
-                    <div class="text-orange" style="font-size:10.5px;">诊前清单(+)</div>
-                  </button>
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="font-extrabold text-green">家庭陪诊订单实时进度</span>
-                  <span class="text-subtle">含收银台支付 · 5步跟踪 · 评价售后</span>
-                </div>
-                <div id="capp-orders-container" class="space-y-2"></div>
-              </div>
-
-              <div class="ew-card" style="padding:13px;">
-                <div class="flex items-center justify-between mb-2 text-xs">
-                  <span class="font-extrabold text-green">父母体检推荐 (+) &amp; 适老保险入口 (+)</span>
-                  <span class="text-subtle">严选合作直达</span>
-                </div>
-                <div id="capp-commercial-home" class="grid-2" style="gap:8px;"></div>
-              </div>
-            </div>
-
-            <!-- 子视图 2: AI问答与就医推荐 (+) (ai - 独立二级视图) -->
-            <div id="capp-view-ai" class="capp-subview hidden space-y-3 text-xs">
-              <div class="flex items-center justify-between">
-                <button type="button" onclick="switchCAppTab('home')" class="btn-soft" style="padding:4px 10px;">← 返回首页</button>
-                <span class="badge badge-green">AI问答与就医推荐 (+)</span>
-              </div>
-              <div class="ew-card-mint text-green">
-                <strong>GB/T 47801—2026 合规护栏：</strong>本模块仅生成<strong>就医前准备材料清单、医院无障碍路线与推荐挂号科室</strong>，绝不提供疾病诊断或处方建议（游客态亦可免费试用）。
-              </div>
-              <div class="ew-card space-y-2" style="padding:14px;">
-                <label class="font-extrabold text-green" style="display:block;">描述长辈症状、楼层环境与想去的城市/医院：</label>
-                <textarea id="ai-query-input" rows="3" class="w-full" style="background:var(--ew-paper);">我爸78岁，最近两周走路左膝盖剧痛，没法自己下老小区3楼，想去北京看骨科，推荐哪家医院什么科室？</textarea>
-                <div class="filter-pills-row">
-                  <button type="button" onclick="setAiSample('我爸78岁，最近两周左膝盖剧痛无法自己下3楼，想看北京骨科')" class="filter-pill">膝痛无电梯下3楼</button>
-                  <button type="button" onclick="setAiSample('立冬降温后老人早起头晕、血压升到155/95，胸闷想复查心内科')" class="filter-pill">降温血压波动胸闷</button>
-                  <button type="button" onclick="setAiSample('成都家里老人慢阻肺咳嗽加重，走不动路，想去华西医院看呼吸科')" class="filter-pill">成都华西呼吸慢病</button>
-                </div>
-                <button type="button" id="ai-run-btn" onclick="runAiTriage(this)" class="btn-primary w-full">
-                  生成诊前准备清单与推荐医院科室
-                </button>
-              </div>
-              <div id="ai-result-box" class="space-y-2"></div>
-            </div>
-
-            <!-- 子视图 3: 3步预约下单 + 跳转收银台支付 (book) -->
-            <div id="capp-view-book" class="capp-subview hidden space-y-3 text-xs">
-              <form onsubmit="handleMobileOrderSubmit(event)" class="space-y-3">
-                <div class="ew-card space-y-2" style="padding:14px;">
-                  <div class="flex items-center justify-between">
-                    <span class="font-extrabold text-sm text-green">第 1 步：就诊人与预约挂号(+)</span>
-                    <span id="mb-city-badge" class="badge badge-green">就诊城市：北京</span>
-                  </div>
-                  <div class="grid-2" style="gap:8px;">
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">就诊长辈</label>
-                      <input id="mb-patient" required value="张建国 (78岁)" class="w-full" />
-                    </div>
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">11位联系电话</label>
-                      <input id="mb-phone" required pattern="1[3-9][0-9]{9}" title="请输入11位中国大陆手机号" value="13800138000" class="w-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="font-semibold mb-1" style="display:block;">目标医院</label>
-                    <select id="mb-hospital" onchange="syncMobileHospitalCity()" class="w-full font-bold">
-                      <option value="北京协和医院(东单院区)" data-city="北京">北京协和医院(东单院区)</option>
-                      <option value="北京积水潭医院(新街口院区)" data-city="北京">北京积水潭医院(新街口院区)</option>
-                      <option value="四川大学华西医院(本院)" data-city="成都">四川大学华西医院(本院)</option>
-                    </select>
-                  </div>
-                  <div class="grid-2" style="gap:8px;">
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">挂号科室</label>
-                      <input id="mb-dept" required value="心内科门诊" class="w-full" />
-                    </div>
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">就诊日期 (禁选过去)</label>
-                      <input id="mb-date" type="date" required value="2026-11-16" class="w-full" />
-                    </div>
-                  </div>
-                  <div>
-                    <label class="font-semibold mb-1" style="display:block;">预约挂号(+)办理方式</label>
-                    <input type="hidden" id="mb-reg-mode" value="已挂好号" />
-                    <div class="grid-3" style="gap:6px;">
-                      <button type="button" onclick="selectRegMode('已挂好号', this)" class="reg-mode-btn btn-outline" style="padding:7px 4px;font-size:11.5px;background:var(--ew-mint-soft);">✓ 已挂好号</button>
-                      <button type="button" onclick="selectRegMode('跳官方挂号', this)" class="reg-mode-btn btn-soft" style="padding:7px 4px;font-size:11.5px;">跳官方放号</button>
-                      <button type="button" onclick="selectRegMode('需人工协助挂号', this)" class="reg-mode-btn btn-soft" style="padding:7px 4px;font-size:11.5px;">需协助挂号</button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="ew-card space-y-2" style="padding:14px;">
-                  <div class="font-extrabold text-sm text-green">第 2 步：套餐与失能协助分级</div>
-                  <div class="grid-2" style="gap:8px;">
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">时长套餐</label>
-                      <select id="mb-pkg" onchange="recalcMobilePrice()" class="w-full">
-                        <option value="288|半天陪诊 (4小时标准服务)">半天陪诊 4h (¥288)</option>
-                        <option value="498|全天陪诊 (8小时深度陪同)">全天陪诊 8h (¥498)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label class="font-semibold mb-1" style="display:block;">行动能力分级</label>
-                      <select id="mb-mobility" onchange="recalcMobilePrice()" class="w-full font-bold text-green">
-                        <option value="80|L2 需轮椅代借与推行">L2 轮椅协助 (+¥80)</option>
-                        <option value="50|L1 需全程搀扶看护">L1 搀扶看护 (+¥50)</option>
-                        <option value="150|L3 无电梯上下楼背扶">L3 上下楼背扶 (+¥150)</option>
-                        <option value="0|L0 患者基本自理">L0 基本自理 (+¥0)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="ew-card space-y-2" style="padding:14px;">
-                  <div class="font-extrabold text-sm text-green">第 3 步：接送交接位置与跳滴滴/高德(+)</div>
-                  <input id="mb-pickup" required value="朝阳区幸福一村3号楼2单元301(无电梯3楼)" class="w-full" placeholder="接手位置" />
-                  <input id="mb-dropoff" required value="就诊结束后送回幸福一村3号楼家中交接" class="w-full" placeholder="结束交接位置" />
-                  <button type="button" onclick="openRideModal()" class="btn-blue w-full">
-                    预览无障碍落客点坐标 &amp; 唤醒滴滴/高德预约车辆 (+)
-                  </button>
-                </div>
-
-                <div class="ew-card flex items-center justify-between" style="padding:13px 15px;border:2px solid var(--ew-green);">
-                  <div>
-                    <div id="mb-price-formula" class="text-subtle" style="font-size:11px;">套餐 ¥288 + 分级 ¥80</div>
-                    <div id="mb-total-price" class="text-xl font-extrabold text-orange">¥368</div>
-                  </div>
-                  <button type="submit" id="mb-submit-btn" class="btn-primary" style="padding:11px 15px;">
-                    去收银台支付下单 →
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <!-- 子视图 4: 诊后闭环 (医嘱打卡+ / 真图报告预览+ / 复检+ / 理赔包+) (post) -->
-            <div id="capp-view-post" class="capp-subview hidden space-y-3 text-xs">
-              <div id="capp-meds-container" class="ew-card space-y-2" style="padding:14px;"></div>
-              <div id="capp-reports-container" class="space-y-3"></div>
-            </div>
-
-            <!-- 子视图 5: 7日体征趋势图 + 种草笔记社区 (care) -->
-            <div id="capp-view-care" class="capp-subview hidden space-y-3 text-xs">
-              <div class="ew-card space-y-3" style="padding:14px;">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <span class="font-extrabold text-sm text-green">健康日记与 7 日体征趋势图 (+)</span>
-                    <div class="text-subtle" style="font-size:11px;">每日记录生成临床曲线，复诊时直接展示给医生</div>
-                  </div>
-                  <span class="badge badge-green">实时绘图</span>
-                </div>
-                <div id="capp-vitals-chart" class="ew-card-paper" style="padding:10px;"></div>
-                <form onsubmit="handleDiarySubmit(event)" class="ew-card-paper space-y-2" style="background:#ffffff;">
-                  <div class="grid-3" style="gap:7px;">
-                    <div>
-                      <label class="text-subtle" style="font-size:10.5px;display:block;">收缩压(高压)</label>
-                      <input id="diary-sys" type="number" min="60" max="250" required value="128" class="w-full font-bold" />
-                    </div>
-                    <div>
-                      <label class="text-subtle" style="font-size:10.5px;display:block;">舒张压(低压)</label>
-                      <input id="diary-dia" type="number" min="40" max="150" required value="78" class="w-full font-bold" />
-                    </div>
-                    <div>
-                      <label class="text-subtle" style="font-size:10.5px;display:block;">空腹血糖</label>
-                      <input id="diary-sugar" type="number" step="0.1" min="2.0" max="30.0" required value="5.7" class="w-full font-bold" />
-                    </div>
-                  </div>
-                  <div class="flex gap-2">
-                    <input id="diary-note" placeholder="今日身体感受或用药运动备注..." class="w-full" />
-                    <button type="submit" id="diary-submit-btn" class="btn-primary whitespace-nowrap" style="padding:8px 14px;">打卡记录</button>
-                  </div>
-                </form>
-                <div id="capp-diaries-container" class="space-y-1.5"></div>
-              </div>
-
-              <div class="ew-card space-y-2" style="padding:13px;">
-                <span class="font-extrabold text-sm text-green">敲门笔记 · 三甲无障碍攻略与食养 (+)</span>
-                <div id="capp-article-filters" class="filter-pills-row"></div>
-                <div id="capp-articles-container" class="xhs-grid"></div>
-              </div>
-            </div>
-
-            <!-- 子视图 6 (Tab 5): 「我的 / 个人中心」合规与账户基座 (mine) -->
-            <div id="capp-view-mine" class="capp-subview hidden space-y-3 text-xs">
-              <div id="capp-mine-banner" class="mine-profile-banner"></div>
-
-              <div class="ew-card" style="padding:4px 0;">
-                <button type="button" onclick="openModal('modal-add-patient')" class="mine-menu-item">
-                  <span>家庭照护长辈档案管理（新增/切换）</span><span class="text-subtle">→</span>
-                </button>
-                <button type="button" onclick="openInvoiceModal()" class="mine-menu-item">
-                  <span>电子发票申请与开票记录</span><span id="mine-invoice-count" class="badge badge-green">可开票</span>
-                </button>
-                <button type="button" onclick="switchToEscortFromMine()" class="mine-menu-item">
-                  <span>切换至「持证陪诊师工作台」（需认证手机号）</span><span class="text-orange">切换 →</span>
-                </button>
-                <button type="button" onclick="openEmergencySos()" class="mine-menu-item">
-                  <span class="text-danger">紧急医疗求助 (120急救直呼 / 平台专员热线)</span><span class="text-danger">直呼 →</span>
-                </button>
-              </div>
-
-              <div class="ew-card" style="padding:4px 0;">
-                <button type="button" onclick="openLegalDoc('user')" class="mine-menu-item">
-                  <span>《健康来敲门用户服务协议》</span><span class="text-subtle">查阅 →</span>
-                </button>
-                <button type="button" onclick="openLegalDoc('privacy')" class="mine-menu-item">
-                  <span>《医疗健康敏感个人信息保护政策》</span><span class="text-subtle">查阅 →</span>
-                </button>
-                <button type="button" onclick="openLegalDoc('service')" class="mine-menu-item">
-                  <span>《GB/T 47801—2026 陪诊服务12+7合规边界告知书》</span><span class="text-subtle">查阅 →</span>
-                </button>
-              </div>
-
-              <div id="capp-mine-auth-actions" class="space-y-2"></div>
-            </div>
-
-          </div>
-
-          <!-- 手机底部标准 5-Tab 导航栏 (严格符合微信小程序最多5个Tab规范) -->
-          <nav class="phone-tabbar" aria-label="移动端底部5项标准导航">
-            <button type="button" onclick="switchCAppTab('home')" id="ctab-home" class="capp-tab-btn active">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-              <span>首页关怀</span>
-            </button>
-            <button type="button" onclick="switchCAppTab('book')" id="ctab-book" class="capp-tab-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
-              <span>预约陪诊</span>
-            </button>
-            <button type="button" onclick="switchCAppTab('post')" id="ctab-post" class="capp-tab-btn">
-              <span id="tab-badge-meds" class="tab-dot-badge hidden">1</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-              <span>医嘱理赔</span>
-            </button>
-            <button type="button" onclick="switchCAppTab('care')" id="ctab-care" class="capp-tab-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
-              <span>健康笔记</span>
-            </button>
-            <button type="button" onclick="switchCAppTab('mine')" id="ctab-mine" class="capp-tab-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-              <span>我的</span>
-            </button>
-          </nav>
-        </div>
-      </section>
-
     </div>
-  </main>
+  </section>
 
-  <!-- ==================== 终端 3：陪诊师接单工作台 (含持证手机号准入登录与真图上传) ==================== -->
-  <main id="term-b-app" class="terminal-view hidden py-6" style="flex:1;background:#172b27;">
-    <div class="ew-container lg-workbench-grid">
-      <aside class="ew-card space-y-4 text-xs" style="background:#213a35;border-color:#345952;color:#ffffff;">
-        <div class="flex items-center justify-between">
-          <span class="badge badge-orange" style="background:var(--ew-orange);color:#fff;">陪诊师实名准入鉴权端</span>
-          <button type="button" onclick="openMobileLoginModal('ESCORT')" class="badge badge-green" style="cursor:pointer;padding:4px 9px;">验证陪诊师手机号登录</button>
-        </div>
-        <h2 class="text-lg font-extrabold" style="margin:4px 0;">持证陪诊师账号切换与准入核验</h2>
-        <p style="margin:0;color:#b2cfc4;">仅已在平台备案健康证与护理证的白名单手机号可登录接单（普通未认证手机号登录将被后端 403 拦截）：</p>
-        <div id="escort-switcher-list" class="space-y-2"></div>
-
-        <div class="ew-card-paper space-y-1.5" style="background:#102622;border-color:#2b4d46;color:#d6ebe2;">
-          <div class="font-extrabold" style="color:#ffffff;">第 4 步真实拍照/选图上传已实装：</div>
-          <div>点击右侧<strong>【第4步：上传报告/理赔单】</strong>时，可从电脑/手机选择真实化验单或票据图片上传至服务端 <code>/uploads/</code>，C端家属可在报告卡直接点击缩略图放大查验原件！</div>
-        </div>
-
-        <button type="button" onclick="switchTerminal('c-app')" class="btn-outline w-full" style="border-color:#ffffff;">
-          切回【2. C端家庭关怀端】查看同步成果 →
-        </button>
-      </aside>
-
-      <section>
-        <div class="phone-frame">
-          <div class="phone-status-bar dark">
-            <span>09:41</span>
-            <div class="phone-notch-pill"></div>
-            <span>持证已核验</span>
-          </div>
-          <div class="phone-header dark flex items-center justify-between">
-            <div>
-              <div class="text-sm font-extrabold" id="bapp-escort-name">李淑芬 · 陪诊师工作台</div>
-              <div class="text-xs" style="color:#a4c3b8;" id="bapp-escort-meta">北京康护之家 ｜ 健康证有效</div>
-            </div>
-            <button type="button" id="bapp-schedule-btn" onclick="toggleCurrentEscortSchedule(this)" class="badge badge-solid-green" style="padding:5px 10px;cursor:pointer;">
-              ● 排班听单中
-            </button>
-          </div>
-
-          <div class="phone-body text-xs">
-            <div id="bapp-escort-stats" class="ew-card grid-3 text-center" style="padding:12px;"></div>
-            <div id="bapp-orders-list" class="space-y-3"></div>
-          </div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- ==================== 终端 4：平台总控 & B端机构 RBAC 管理后台 (带独立账号密码登录门户) ==================== -->
-  <main id="term-admin" class="terminal-view hidden py-6" style="flex:1;">
-    <!-- 未登录管理员时展示：独立管理后台账号密码登录门户 -->
-    <section id="admin-login-gate" class="ew-container hidden">
-      <div class="auth-gate-card space-y-4 text-xs">
-        <div class="flex items-center justify-between">
-          <span class="badge badge-green">RBAC 权限认证门户</span>
-          <span class="text-subtle">scrypt 密码哈希 + Bearer Token</span>
-        </div>
+  <!-- 模块 5：二十四节气时令饮食 & 三甲医院无障碍就医攻略专栏 -->
+  <section id="sec-articles" class="py-6">
+    <div class="ew-container-wide space-y-4">
+      <div class="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h2 class="text-xl font-extrabold" style="margin:0;">健康来敲门 · 运营与机构管理后台登录</h2>
-          <p class="text-muted mt-1" style="margin-bottom:0;">平台总控管理员与 B 端合作护工机构主管请使用分配的专属账号登录（数据按角色严格隔离）：</p>
+          <span class="badge badge-green">健康文章 · 视频与时令饮食专栏</span>
+          <h2 class="text-2xl font-extrabold mt-1" style="margin-bottom:0;">三甲医院轮椅动线实测与中老年节气慢病食养</h2>
         </div>
+        <a href="/app/#care" class="btn-soft text-xs">前往 C端社区参与点赞收藏 →</a>
+      </div>
+      <div id="web-articles-grid" class="grid-3 text-xs"></div>
+    </div>
+  </section>
 
-        <form onsubmit="handleAdminLoginSubmit(event)" class="space-y-3">
-          <div>
-            <label class="font-bold mb-1" style="display:block;">后台登录账号 *</label>
-            <input id="adm-login-user" required value="admin" class="w-full" placeholder="输入 admin 或 org_bj" />
+  <!-- 模块 6：B端合作陪护机构 & 个人持证陪诊师招募入驻 -->
+  <section id="sec-join" class="py-10">
+    <div class="ew-container-wide md-split-12">
+      <div class="space-y-3">
+        <span class="badge badge-orange">前 3 年免收押金 · 平台技术服务费 ≤10%</span>
+        <h2 class="text-2xl font-extrabold" style="margin:0;">诚邀医院周边正规陪护机构与持证护理员入驻</h2>
+        <p class="text-sm text-muted" style="line-height:1.7;">
+          健康来敲门不向护工与合作机构转嫁高额抽佣：B端合作机构抽佣仅 <strong>8%</strong>，自有持证陪诊员抽佣仅 <strong>6%</strong>，且在 2029 年 11 月前全面免收履约保证金。提交资料经运营后台审核通过后，即可使用备案手机号登录【陪诊师工作台】听单增收。
+        </p>
+        <div class="ew-card-mint text-xs space-y-1.5">
+          <div class="font-extrabold text-green">准入硬性资质要求：</div>
+          <div>1. 个人陪诊员须持有有效期内《健康证》及养老护理员证 / 护士执业证 / 医疗陪诊培训合格证之一；</div>
+          <div>2. B端合作机构须具备正规营业执照，名下护工已完成实名背景核查与商业意外险覆盖；</div>
+          <div>3. 已通过准入的伙伴可直接点击右上角 <a href="/escort/" class="text-green font-extrabold">【陪诊师工作台】</a> 或 <a href="/admin/" class="text-green font-extrabold">【机构子后台】</a> 登录作业。</div>
+        </div>
+      </div>
+
+      <div class="ew-card">
+        <h3 class="text-base font-extrabold mb-3" style="margin-top:0;">在线提交入驻资质申请（直通运营审批库）</h3>
+        <form onsubmit="handleWebJoinSubmit(event)" class="space-y-2.5 text-xs">
+          <div class="grid-2" style="gap:10px;">
+            <div>
+              <label class="font-bold mb-1" style="display:block;">入驻主体类型 *</label>
+              <select id="join-type" class="w-full">
+                <option value="ESCORT">个人持证陪诊员 / 护工 / 退役护士</option>
+                <option value="ORG">B端医院陪护公司 / 养老服务机构</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-bold mb-1" style="display:block;">服务城市 *</label>
+              <select id="join-city" class="w-full">
+                <option value="北京">北京</option>
+                <option value="成都">成都</option>
+                <option value="上海">上海</option>
+                <option value="广州">广州</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">登录密码 *</label>
-            <input id="adm-login-pass" type="password" required value="Everwell2026" class="w-full" placeholder="输入后台密码" />
+          <div class="grid-2" style="gap:10px;">
+            <input id="join-name" required placeholder="申请人姓名 或 机构企业全称 *" class="w-full" />
+            <input id="join-phone" required pattern="1[3-9][0-9]{9}" placeholder="11位联系与登录备案手机号 *" class="w-full" />
           </div>
-          <button type="submit" id="adm-login-btn" class="btn-primary w-full" style="padding:11px;">
-            安全登录管理后台
-          </button>
+          <textarea id="join-qual" rows="3" required placeholder="请填写持有证书名称（如：高级养老护理员证+健康证）、熟悉的三甲医院及可承接失能等级..." class="w-full">持有国家养老护理员三级证书及有效健康证，熟悉北京协和与积水潭门诊轮椅路线，可承接L0-L3失能协助。</textarea>
+          <button type="submit" id="join-submit-btn" class="btn-primary w-full" style="padding:11px;">提交准入申请</button>
         </form>
-
-        <div class="ew-card-paper space-y-1.5">
-          <div class="font-bold text-green">验收快捷填入（真实走后端密码哈希校验与签发 Token）：</div>
-          <div class="grid-2" style="gap:8px;">
-            <button type="button" onclick="quickFillAdmin('admin', 'Everwell2026')" class="btn-soft">填入总控：admin</button>
-            <button type="button" onclick="quickFillAdmin('org_bj', 'Org2026')" class="btn-soft">填入B端机构：org_bj</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 已通过管理员认证后展示：管理后台主体 -->
-    <div id="admin-authed-workspace" class="ew-container-wide space-y-5">
-      <div class="ew-card flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="badge badge-green" id="adm-role-badge">平台总控管理员</span>
-            <span class="text-xs text-muted" id="adm-user-label">当前账号：admin</span>
-          </div>
-          <h2 class="text-xl font-extrabold mt-1" style="margin-bottom:0;">智能筛选派单、供给准入、售后品控与财务对账中枢</h2>
-        </div>
-        <div class="flex items-center gap-2 flex-wrap text-xs">
-          <a href="/api/admin/export-orders.csv" target="_blank" class="btn-outline" style="padding:7px 12px;">导出财务对账单 (.csv)</a>
-          <button type="button" onclick="switchAdminDemoAccount()" class="btn-soft" style="padding:7px 12px;">切换 总控/B端机构 账号</button>
-          <button type="button" onclick="handleAdminLogout()" class="btn-soft text-danger" style="padding:7px 12px;">退出后台</button>
-        </div>
-      </div>
-
-      <div id="adm-kpi-cards" class="kpi-grid text-xs"></div>
-
-      <div class="ew-card space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 class="text-base font-extrabold" style="margin:0;">订单实时调度、支付核验与售后品控台</h3>
-            <p class="text-xs text-muted" style="margin:2px 0 0;">未支付订单自动拦截派单；B端机构子账号仅可见本机构运力与归属订单</p>
-          </div>
-          <div id="adm-order-filters" class="filter-pills-row"></div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="text-xs" style="min-width:920px;">
-            <thead>
-              <tr style="background:var(--ew-paper);border-top:1px solid var(--ew-line);border-bottom:1px solid var(--ew-line);color:var(--ew-muted);">
-                <th style="padding:11px;text-align:left;">订单号 / 支付流水</th>
-                <th style="padding:11px;text-align:left;">患者与失能分级</th>
-                <th style="padding:11px;text-align:left;">城市医院 / 科室 / 日期</th>
-                <th style="padding:11px;text-align:left;">患者确认(+)状态</th>
-                <th style="padding:11px;text-align:left;">实付 / 提成(≤10%) / 分账</th>
-                <th style="padding:11px;text-align:left;">陪诊师 / 节点 / 评价售后</th>
-                <th style="padding:11px;text-align:left;">调度与品控操作</th>
-              </tr>
-            </thead>
-            <tbody id="adm-orders-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="md-split-12">
-        <div class="ew-card space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-green" style="margin:0;">扩展业务：体检(+) / 购药(+) / 保险(+) 导流归因台账</h3>
-            <button type="button" onclick="openModal('modal-add-commercial')" class="btn-soft" style="padding:4px 10px;">+ 新增合作位</button>
-          </div>
-          <div id="adm-commercial-list" class="space-y-2 text-xs"></div>
-        </div>
-
-        <div class="ew-card space-y-3">
-          <div class="flex items-center justify-between">
-            <h3 class="text-sm font-extrabold text-green" style="margin:0;">供给网络：入驻审批 &amp; 前3年免押金运力池</h3>
-            <span class="badge badge-green">免押期至 2029-11</span>
-          </div>
-          <div id="adm-applications-list" class="space-y-2 text-xs"></div>
-          <div id="adm-escorts-summary" class="space-y-1.5 text-xs" style="border-top:1px solid var(--ew-line);padding-top:10px;"></div>
-        </div>
       </div>
     </div>
-  </main>
+  </section>
 
-  <!-- ==================== 模态框 A：小程序半屏授权 & App 验证码/一键登录窗 ==================== -->
-  <div id="modal-mobile-login" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:430px;">
-      <div class="flex items-center justify-between">
-        <span id="mlogin-role-badge" class="badge badge-green">C端家庭照护登录</span>
-        <button type="button" onclick="closeModal('modal-mobile-login')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <div>
-        <h3 class="text-lg font-extrabold" style="margin:0;" id="mlogin-title">欢迎登录健康来敲门</h3>
-        <p class="text-muted mt-1" style="margin-bottom:0;">登录后同步家庭长辈健康档案、医疗陪诊订单与加密医嘱报告</p>
-      </div>
-
-      <!-- 方式1：微信小程序 / 本机运营商一键快捷登录 -->
-      <div class="ew-card-mint space-y-2">
-        <div class="font-extrabold text-green">推荐方式：微信小程序 / 本机号码一键快捷登录</div>
-        <button type="button" id="mlogin-wx-btn" onclick="submitWechatQuickLogin(this)" class="btn-primary w-full" style="padding:11px;">
-          微信绑定手机号一键安全登录
-        </button>
-      </div>
-
-      <!-- 方式2：App 手机号 + 短信验证码登录 -->
-      <form onsubmit="submitSmsMobileLogin(event)" class="ew-card-paper space-y-2.5" style="background:#ffffff;">
-        <div class="font-bold">其他手机号短信验证码登录（App / 异地账号切换）：</div>
-        <input id="mlogin-phone" required pattern="1[3-9][0-9]{9}" value="13800138000" placeholder="请输入 11 位中国大陆手机号" class="w-full" />
-        <div class="flex gap-2">
-          <input id="mlogin-code" required value="888888" placeholder="6位短信验证码" class="w-full" />
-          <button type="button" onclick="sendMobileSmsCode(this)" class="btn-soft whitespace-nowrap">获取验证码</button>
+  <!-- 企业级正式商业页脚 -->
+  <footer class="web-footer">
+    <div class="ew-container-wide space-y-4">
+      <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="space-y-1.5" style="max-width:440px;">
+          <div class="text-base font-extrabold" style="color:#fff;">健康来敲门 Everwell · 家庭就医陪诊与健康守护平台</div>
+          <div>全国 7×24h 助老协调与应急专线：<strong style="color:#fff;">400-890-2026</strong>（危急重症请第一时间拨打 120）</div>
+          <div>合规声明：本平台严格遵循《GB/T 47801—2026》，仅提供非医疗性质助老就医陪同与客观信息记录，不从事医疗诊断及号源倒卖。</div>
         </div>
-        <button type="submit" id="mlogin-sms-btn" class="btn-outline w-full">短信验证码登录 / 注册</button>
-      </form>
-
-      <!-- 强制未默认勾选的隐私与用户协议栏（符合工信部与App Store要求） -->
-      <label class="flex items-start gap-2 text-muted" style="cursor:pointer;">
-        <input type="checkbox" id="mlogin-privacy-chk" style="width:16px;height:16px;margin-top:2px;" />
-        <span>我已阅读并同意<button type="button" onclick="openLegalDoc('user')" class="text-green font-bold">《用户服务协议》</button>与<button type="button" onclick="openLegalDoc('privacy')" class="text-green font-bold">《医疗健康敏感信息隐私政策》</button>（未注册手机号验证后将自动创建家庭账号）。</span>
-      </label>
+        <div class="flex gap-4 flex-wrap">
+          <div class="space-y-1">
+            <div class="font-bold" style="color:#fff;">旗下独立商业应用矩阵</div>
+            <div><a href="/" style="color:#b5cec5;">· 官方品牌网站 (Web端)</a></div>
+            <div><a href="/app/" style="color:#b5cec5;">· C端家庭关怀与陪诊 App (/app/)</a></div>
+            <div><a href="/escort/" style="color:#b5cec5;">· 持证陪诊师工作台 App (/escort/)</a></div>
+            <div><a href="/admin/" style="color:#b5cec5;">· 运营总控与B端机构 SaaS 后台 (/admin/)</a></div>
+          </div>
+          <div class="space-y-1">
+            <div class="font-bold" style="color:#fff;">法律协议与隐私合规</div>
+            <div><button type="button" onclick="openLegalDoc('user')" style="color:#b5cec5;">· 《用户服务协议》</button></div>
+            <div><button type="button" onclick="openLegalDoc('privacy')" style="color:#b5cec5;">· 《医疗健康敏感信息隐私政策》</button></div>
+            <div><button type="button" onclick="openLegalDoc('service')" style="color:#b5cec5;">· 《国标 12+7 陪诊合规边界告知书》</button></div>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.12);padding-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;color:#84a59a;">
+        <span>© 2026 健康来敲门科技有限公司 Everwell Health Tech Co., Ltd. 保留所有权利</span>
+        <span>京ICP备2026047801号-1 ｜ 医疗健康个人信息加密保护已启用</span>
+      </div>
     </div>
-  </div>
+  </footer>
 
-  <!-- ==================== 模态框 B：统一支付收银台 (微信支付 / 支付宝 / 亲属代付) ==================== -->
+  <!-- 收银台弹窗 -->
   <div id="modal-cashier" class="modal-backdrop hidden">
     <div class="modal-panel space-y-3 text-xs" style="max-width:430px;">
       <div class="flex items-center justify-between">
@@ -876,293 +390,58 @@
         <div class="text-muted" id="cashier-order-desc">陪诊预约单待支付</div>
         <div class="text-3xl font-extrabold text-orange mt-1" id="cashier-amount-text">¥368.00</div>
       </div>
-
       <div class="space-y-2" id="cashier-channels">
-        <div onclick="selectPayChannel('微信支付', this)" class="pay-option-card selected">
-          <span>微信支付（小程序 / App 原生调起）</span><span class="text-green">✓</span>
-        </div>
-        <div onclick="selectPayChannel('支付宝', this)" class="pay-option-card">
-          <span>支付宝 App 快捷支付</span><span>○</span>
-        </div>
-        <div onclick="selectPayChannel('亲属微信代付', this)" class="pay-option-card">
-          <span>转发子女/亲属微信代付卡片</span><span>○</span>
-        </div>
+        <div onclick="selectPayChannel('微信支付', this)" class="pay-option-card selected"><span>微信扫码 / 快捷支付</span><span class="text-green">✓</span></div>
+        <div onclick="selectPayChannel('支付宝', this)" class="pay-option-card"><span>支付宝即时到账</span><span>○</span></div>
+        <div onclick="selectPayChannel('亲属微信代付', this)" class="pay-option-card"><span>生成亲属微信代付链接</span><span>○</span></div>
       </div>
-
-      <button type="button" id="cashier-pay-btn" onclick="confirmCashierPayment(this)" class="btn-primary w-full" style="padding:12px;font-size:13.5px;">
-        确认安全支付
-      </button>
+      <button type="button" onclick="confirmCashierPayment(this)" class="btn-primary w-full" style="padding:12px;font-size:13.5px;">立即完成支付</button>
     </div>
   </div>
 
-  <!-- ==================== 模态框 C：患者确认(+) 三选一无障碍确认弹窗 ==================== -->
-  <div id="modal-patient-confirm" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">国标核心要求：患者确认 (+)</span>
-        <button type="button" onclick="closeModal('modal-patient-confirm')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-lg font-extrabold" style="margin:0;">完成患者本人知情确认与结果分享授权</h3>
-      <p class="text-xs text-muted" style="margin:0;">
-        当前订单：<strong id="confirm-modal-orderno" class="text-orange"></strong>。依据《GB/T 47801—2026》要求，家属代下单需确认患者知情同意并明确诊后报告查看范围：
-      </p>
-      <div class="space-y-2 text-xs">
-        <button type="button" onclick="submitPatientConfirm('方式A：已转发微信大字确认卡片，患者本人一键点击【同意授权】', this)" class="ew-card-mint w-full text-left" style="cursor:pointer;">
-          <div class="font-extrabold text-sm text-green">方式 A：转发微信无障碍大字卡片 · 父母一键点绿钮确认（异地首选）</div>
-          <div class="text-muted mt-1">无需老人打字或下载App，微信内点一次大号绿色按钮即完成授权留痕。</div>
-        </button>
-        <button type="button" onclick="submitPatientConfirm('方式B：同住家属在旁，患者已完成同机手写签名/当面授权确认', this)" class="ew-card-paper w-full text-left" style="cursor:pointer;">
-          <div class="font-extrabold text-sm">方式 B：同住身边 · 患者同机签名或当面口头确认勾选</div>
-          <div class="text-muted mt-1">适合子女在父母身旁协助操作手机，当面阅读知情书后即时确认。</div>
-        </button>
-        <button type="button" onclick="submitPatientConfirm('方式C：重度失能免手机操作 · 由陪诊师到达接手现场当面核验补确认', this)" class="ew-card-paper w-full text-left" style="cursor:pointer;">
-          <div class="font-extrabold text-sm">方式 C：高龄重度失能豁免 · 陪诊师第2步上门接手现场补核验</div>
-          <div class="text-muted mt-1">不卡死紧急就医派单流程，由持证陪诊员到达接手点后当面核验并上传凭证。</div>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 D：后台智能派单弹窗 ==================== -->
-  <div id="modal-dispatch" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3" style="max-width:560px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">智能规则筛选 + 人工精准派单台</span>
-        <button type="button" onclick="closeModal('modal-dispatch')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" id="dispatch-modal-title" style="margin:0;">指派陪诊师</h3>
-      <p class="text-xs text-muted" style="margin:0;">系统已按【失能技能匹配度 + 目标医院熟悉度 + 排班听单状态 + 客户评分】排序推荐：</p>
-      <div id="dispatch-candidates-list" class="space-y-2 text-xs"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 E：陪诊师第4步 真实图片上传 & 结构化医嘱录入 ==================== -->
-  <div id="modal-step4-report" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:540px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">第4步节点：支持本地真图拍照上传 + 联动生成4大诊后卡片</span>
-        <button type="button" onclick="closeModal('modal-step4-report')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">上传检查报告/理赔原件照片 &amp; 录入医生原话医嘱</h3>
-      <form onsubmit="submitStep4Report(event)" class="space-y-3">
-        <div>
-          <label class="font-bold mb-1" style="display:block;">1. 医生原话客观记录 (严禁主观解读检验指标或改动医嘱) *</label>
-          <textarea id="s4-advice" rows="3" required class="w-full" style="background:var(--ew-paper);">【医生原话客观记录】患者今日复查指标平稳，医嘱继续按时服用降压及护骨关节药物，立冬后注意防寒保暖、每日食盐小于5g；2周后早上空腹复查血生化。</textarea>
-        </div>
-        <div class="grid-2" style="gap:8px;">
-          <div>
-            <label class="font-bold mb-1" style="display:block;">2. 转化为【医嘱执行(+)】药品名称 *</label>
-            <input id="s4-drug" required value="苯磺酸氨氯地平片 5mg + 骨化三醇" class="w-full" />
-          </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">每日服药频次提醒 *</label>
-            <input id="s4-freq" required value="每日1次 · 早饭后温水送服" class="w-full" />
-          </div>
-        </div>
-        <div class="grid-2" style="gap:8px;">
-          <div>
-            <label class="font-bold mb-1" style="display:block;">3. 【术后/诊后复检(+)】建议复检日 *</label>
-            <input id="s4-recheck-date" type="date" required value="2026-11-26" class="w-full" />
-          </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">4. 【结果分享(+)】授权查看家属 *</label>
-            <input id="s4-viewers" required value="张晓敏(女儿), 张伟(儿子)" class="w-full" />
-          </div>
-        </div>
-
-        <!-- 真实文件上传控件 -->
-        <div class="ew-card-paper space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="font-bold text-green">5. 现场拍摄/选择检验报告单与电子发票图片（真实上传至服务器）：</label>
-            <input type="file" id="s4-file-input" accept="image/*" multiple onchange="handleStep4FileSelect(event)" style="font-size:11px;max-width:195px;padding:3px;" />
-          </div>
-          <div id="s4-uploaded-preview" class="flex flex-wrap gap-2 items-center"></div>
-        </div>
-
-        <button type="submit" id="s4-submit-btn" class="btn-primary w-full" style="padding:11px;">
-          确认上传并同步生成 C端结果报告 / 服药打卡 / 复检提醒 / 理赔包
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 F：位置选择·跳转滴滴高德 (+) ==================== -->
-  <div id="modal-ride-wakeup" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:450px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-blue">位置选择 · 跳转滴滴/高德 (+)</span>
-        <button type="button" onclick="closeModal('modal-ride-wakeup')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">起终点与医院无障碍落客坐标已自动注入</h3>
-      <div class="ew-card-paper space-y-1.5">
-        <div><strong class="text-green">● 起点（接手位置）：</strong><span id="ride-start-text"></span></div>
-        <div><strong class="text-orange">● 终点（医院落客点）：</strong><span id="ride-end-text"></span></div>
-        <div class="text-subtle" id="ride-coord-text"></div>
-      </div>
-      <div class="grid-2" style="gap:10px;">
-        <a id="ride-didi-link" href="https://common.diditaxi.com.cn/general/webEntry" target="_blank" rel="noopener" onclick="closeModal('modal-ride-wakeup');showToast('已通过外部出行桥接唤醒【滴滴出行-助老无障碍打车】！')" class="btn-orange text-center" style="padding:12px;display:block;">
-          <div class="font-extrabold">唤醒滴滴助老打车</div>
-          <div style="font-size:10.5px;opacity:0.88;">小程序 / App 自动填入起终点</div>
-        </a>
-        <a id="ride-amap-link" href="https://uri.amap.com/navigation?to=116.4175,39.9138,北京协和医院&mode=car&src=everwell" target="_blank" rel="noopener" onclick="closeModal('modal-ride-wakeup');showToast('已通过高德官方 URI 唤醒【高德打车与无障碍路线导航】！')" class="btn-primary text-center" style="background:var(--ew-blue);padding:12px;display:block;">
-          <div class="font-extrabold">唤醒高德打车/导航</div>
-          <div style="font-size:10.5px;opacity:0.88;">直达医院无障碍落客区</div>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 G：4档阶梯退改试算 ==================== -->
-  <div id="modal-cancel-tier" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:460px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-orange">透明阶梯退改试算</span>
-        <button type="button" onclick="closeModal('modal-cancel-tier')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">办理订单取消与原路退款试算</h3>
-      <p class="text-muted" style="margin:0;">请选择当前距离约定服务开始的时间区间：</p>
-      <div id="cancel-tier-options" class="space-y-2"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 H：新增家庭照护长辈档案 ==================== -->
-  <div id="modal-add-patient" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:460px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">多长辈家庭档案管理</span>
-        <button type="button" onclick="closeModal('modal-add-patient')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">新增家庭照护长辈档案</h3>
-      <form onsubmit="handleAddPatientSubmit(event)" class="space-y-2.5">
-        <div class="grid-2" style="gap:8px;">
-          <div>
-            <label class="font-bold mb-1" style="display:block;">长辈姓名 *</label>
-            <input id="np-name" required placeholder="如：王秀兰" class="w-full" />
-          </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">亲属称谓 *</label>
-            <select id="np-relation" class="w-full">
-              <option value="母亲">母亲</option>
-              <option value="父亲">父亲</option>
-              <option value="岳母">岳母</option>
-              <option value="岳父">岳父</option>
-              <option value="祖父母">祖父母</option>
-            </select>
-          </div>
-        </div>
-        <div class="grid-3" style="gap:8px;">
-          <div>
-            <label class="font-bold mb-1" style="display:block;">年龄 *</label>
-            <input id="np-age" type="number" min="40" max="115" required value="76" class="w-full" />
-          </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">常住城市 *</label>
-            <select id="np-city" class="w-full">
-              <option value="北京">北京</option>
-              <option value="成都">成都</option>
-              <option value="上海">上海</option>
-            </select>
-          </div>
-          <div>
-            <label class="font-bold mb-1" style="display:block;">生日(月日)</label>
-            <input id="np-birthday" required value="12月18日" class="w-full" />
-          </div>
-        </div>
-        <div>
-          <label class="font-bold mb-1" style="display:block;">默认行动能力分级 *</label>
-          <select id="np-mobility" class="w-full font-bold text-green">
-            <option value="L2">L2 中度失能 · 需轮椅代借与推行 (+¥80)</option>
-            <option value="L1">L1 轻度受限 · 需全程搀扶看护 (+¥50)</option>
-            <option value="L3">L3 重度受限 · 无电梯上下楼背扶 (+¥150)</option>
-            <option value="L0">L0 基本自理 (+¥0)</option>
-          </select>
-        </div>
-        <input id="np-chronic" value="高血压, 膝关节退行性变" class="w-full" placeholder="慢病史标签" />
-        <input id="np-address" required value="北京市海淀区紫竹院南路8号院2单元202" class="w-full" placeholder="默认上门接手地址" />
-        <button type="submit" id="np-submit-btn" class="btn-primary w-full" style="padding:10px;">保存并切换为当前照护对象</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 I：订单全链路审计时间轴 ==================== -->
-  <div id="modal-order-events" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:500px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">全链路留痕与合规审计流水</span>
-        <button type="button" onclick="closeModal('modal-order-events')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" id="events-modal-title" style="margin:0;">订单履约时间轴</h3>
-      <div id="events-timeline-box" class="audit-timeline"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 J：种草笔记详情阅读 ==================== -->
-  <div id="modal-article-detail" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:500px;">
-      <div class="flex items-center justify-between">
-        <span id="art-modal-badge" class="badge badge-green">实景攻略</span>
-        <button type="button" onclick="closeModal('modal-article-detail')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 id="art-modal-title" class="text-base font-extrabold" style="margin:0;"></h3>
-      <div id="art-modal-author" class="text-subtle"></div>
-      <div id="art-modal-content" class="ew-card-paper" style="line-height:1.7;font-size:13px;"></div>
-      <div id="art-modal-actions" class="flex items-center justify-between gap-2 pt-1"></div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 K：服务评价打星 & 投诉售后工单 ==================== -->
-  <div id="modal-review-aftersale" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:460px;">
-      <div class="flex items-center justify-between">
-        <span id="ra-modal-badge" class="badge badge-green">诊后服务评价与品控闭环</span>
-        <button type="button" onclick="closeModal('modal-review-aftersale')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" id="ra-modal-title" style="margin:0;">评价本次陪诊服务</h3>
-      <div id="ra-stars-row" class="flex items-center gap-1">
-        <button type="button" onclick="selectReviewStar(1)" class="star-btn lit">★</button>
-        <button type="button" onclick="selectReviewStar(2)" class="star-btn lit">★</button>
-        <button type="button" onclick="selectReviewStar(3)" class="star-btn lit">★</button>
-        <button type="button" onclick="selectReviewStar(4)" class="star-btn lit">★</button>
-        <button type="button" onclick="selectReviewStar(5)" class="star-btn lit">★</button>
-        <span id="ra-star-label" class="font-bold text-orange ml-1">5.0 分 · 非常满意</span>
-      </div>
-      <textarea id="ra-comment-input" rows="3" class="w-full" placeholder="填写对陪诊师准时度、轮椅看护细节或医嘱记录的评价（或填写售后投诉原因）...">陪诊师非常准时细心，提前借好了共享轮椅，医生原话记录得清清楚楚！</textarea>
-      <div class="grid-2" style="gap:8px;">
-        <button type="button" onclick="submitOrderReview(this)" class="btn-primary">提交星级评价</button>
-        <button type="button" onclick="submitOrderAfterSale(this)" class="btn-soft text-danger">发起投诉/售后申诉</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 L：电子发票申请与开票记录 ==================== -->
+  <!-- 电子发票弹窗 -->
   <div id="modal-invoice" class="modal-backdrop hidden">
     <div class="modal-panel space-y-3 text-xs" style="max-width:460px;">
       <div class="flex items-center justify-between">
         <span class="badge badge-green">增值税普通电子发票</span>
         <button type="button" onclick="closeModal('modal-invoice')" class="btn-soft" style="padding:3px 9px;">✕</button>
       </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">申请开具陪诊服务费电子发票</h3>
+      <h3 class="text-base font-extrabold" style="margin:0;">自助开具陪诊服务费电子发票</h3>
       <form onsubmit="handleInvoiceSubmit(event)" class="space-y-2.5">
         <div class="grid-2" style="gap:8px;">
-          <select id="inv-type" class="w-full">
-            <option value="个人">个人抬头</option>
-            <option value="企业单位">企业单位</option>
-          </select>
-          <input id="inv-orderno" required value="EW2026110801" placeholder="关联订单号" class="w-full" />
+          <select id="inv-type" class="w-full"><option value="个人">个人抬头</option><option value="企业单位">企业单位</option></select>
+          <input id="inv-orderno" required value="EW2026110801" placeholder="关联订单号 *" class="w-full" />
         </div>
         <input id="inv-title" required value="张晓敏" placeholder="发票抬头名称 *" class="w-full" />
-        <input id="inv-taxno" placeholder="企业纳税人识别号（个人免填）" class="w-full" />
+        <input id="inv-taxno" placeholder="纳税人识别号（个人免填）" class="w-full" />
         <div class="grid-2" style="gap:8px;">
           <input id="inv-amount" type="number" required value="368" placeholder="开票金额(元)" class="w-full" />
-          <input id="inv-email" type="email" required value="family@everwell.cn" placeholder="接收电子发票邮箱 *" class="w-full" />
+          <input id="inv-email" type="email" required value="family@everwell.cn" placeholder="接收邮箱 *" class="w-full" />
         </div>
-        <button type="submit" id="inv-submit-btn" class="btn-primary w-full">立即开具并发送至邮箱</button>
+        <button type="submit" id="inv-submit-btn" class="btn-primary w-full">立即开票并发送至邮箱</button>
       </form>
       <div id="inv-history-list" class="space-y-1.5 pt-1"></div>
     </div>
   </div>
 
-  <!-- ==================== 模态框 M：法律协议与医疗隐私政策全文阅读器 ==================== -->
+  <!-- 文章阅读弹窗 -->
+  <div id="modal-article-detail" class="modal-backdrop hidden">
+    <div class="modal-panel space-y-3 text-xs" style="max-width:520px;">
+      <div class="flex items-center justify-between">
+        <span id="art-modal-badge" class="badge badge-green">专栏干货</span>
+        <button type="button" onclick="closeModal('modal-article-detail')" class="btn-soft" style="padding:3px 9px;">✕</button>
+      </div>
+      <h3 id="art-modal-title" class="text-base font-extrabold" style="margin:0;"></h3>
+      <div id="art-modal-author" class="text-subtle"></div>
+      <div id="art-modal-content" class="ew-card-paper" style="line-height:1.75;font-size:13px;"></div>
+      <div class="flex justify-between items-center pt-1">
+        <a href="/app/#care" class="btn-soft">去 C端 App 收藏本文</a>
+        <a href="#sec-booking" onclick="closeModal('modal-article-detail')" class="btn-primary">立即预约同院陪诊 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 法律文本弹窗 -->
   <div id="modal-legal-doc" class="modal-backdrop hidden">
     <div class="modal-panel space-y-3 text-xs" style="max-width:520px;">
       <div class="flex items-center justify-between">
@@ -1174,45 +453,6 @@
     </div>
   </div>
 
-  <!-- ==================== 模态框 N：报告单据真图放大预览灯箱 ==================== -->
-  <div id="modal-image-preview" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs text-center" style="max-width:560px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">陪诊师现场实拍归档原件预览</span>
-        <button type="button" onclick="closeModal('modal-image-preview')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <img id="preview-img-el" src="" alt="医疗报告单据原件" style="max-width:100%;max-height:68vh;border-radius:10px;border:1px solid var(--ew-line);" />
-    </div>
-  </div>
-
-  <!-- ==================== 模态框 O：管理后台新增商业化合作位 ==================== -->
-  <div id="modal-add-commercial" class="modal-backdrop hidden">
-    <div class="modal-panel space-y-3 text-xs" style="max-width:450px;">
-      <div class="flex items-center justify-between">
-        <span class="badge badge-green">新增扩展业务合作入口</span>
-        <button type="button" onclick="closeModal('modal-add-commercial')" class="btn-soft" style="padding:3px 9px;">✕</button>
-      </div>
-      <h3 class="text-base font-extrabold" style="margin:0;">配置新的体检 / 购药 / 保险导流资源位</h3>
-      <form onsubmit="handleAddCommercialSubmit(event)" class="space-y-2.5">
-        <div class="grid-2" style="gap:8px;">
-          <select id="cm-type" class="w-full">
-            <option value="体检推荐">体检推荐(+)</option>
-            <option value="购药入口">购药入口(+)</option>
-            <option value="保险入口">保险入口(+)</option>
-          </select>
-          <input id="cm-cpc" type="number" step="0.5" min="1" max="99" required value="7.5" class="w-full" />
-        </div>
-        <input id="cm-title" required placeholder="入口标题 *" class="w-full" />
-        <div class="grid-2" style="gap:8px;">
-          <input id="cm-partner" required value="瑞慈体检 · 官方合作" class="w-full" />
-          <input id="cm-price" required value="¥468" class="w-full" />
-        </div>
-        <input id="cm-sub" required value="支持体检报告一键同步至健康来敲门家庭档案" class="w-full" />
-        <button type="submit" id="cm-submit-btn" class="btn-primary w-full" style="padding:10px;">立即上架至 C 端</button>
-      </form>
-    </div>
-  </div>
-
-  <script src="/app.js"></script>
+  <script src="/web/web-app.js"></script>
 </body>
 </html>

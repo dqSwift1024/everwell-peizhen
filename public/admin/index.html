@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>健康来敲门 · 运营总控与合作机构 SaaS 管理后台</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <div id="global-toast" class="toast-banner hidden" role="status" aria-live="polite"></div>
+
+  <!-- 未登录：企业级全屏独立登录门禁 -->
+  <section id="saas-login-gate" class="saas-login-screen">
+    <div class="ew-card space-y-4 text-xs" style="width:100%;max-width:430px;padding:30px 26px;border:2px solid #4ca68e;">
+      <div class="flex items-center gap-2">
+        <div class="brand-logo">敲</div>
+        <div>
+          <div class="text-base font-extrabold text-green">健康来敲门 · 企业管理中台</div>
+          <div class="text-subtle" style="font-size:11px;">Everwell Enterprise Operations &amp; Agency RBAC Console</div>
+        </div>
+      </div>
+
+      <div>
+        <h1 class="text-xl font-extrabold" style="margin:0;">管理员与合作机构安全登录</h1>
+        <p class="text-muted mt-1" style="margin-bottom:0;">平台运营总控与 B 端签约护工机构主管请使用分配的专属账号登录（按组织架构严格隔离订单与运力数据）：</p>
+      </div>
+
+      <form onsubmit="handleSaasLogin(event)" class="space-y-3">
+        <div>
+          <label class="font-bold mb-1" style="display:block;">企业管理账号 *</label>
+          <input id="saas-user" required value="admin" placeholder="如：admin 或 org_bj" class="w-full font-bold" />
+        </div>
+        <div>
+          <label class="font-bold mb-1" style="display:block;">安全密码 *</label>
+          <input id="saas-pass" type="password" required value="Everwell2026" placeholder="请输入登录密码" class="w-full" />
+        </div>
+        <button type="submit" id="saas-login-btn" class="btn-primary w-full" style="padding:12px;font-size:14px;">登录管理中台</button>
+      </form>
+
+      <div class="ew-card-paper space-y-1.5">
+        <div class="font-bold text-green">角色账号说明（后端 scrypt 密码哈希核验）：</div>
+        <div class="flex items-center justify-between">
+          <span>平台总控账号：<code>admin</code> / <code>Everwell2026</code></span>
+          <button type="button" onclick="fillSaasCred('admin','Everwell2026')" class="text-green font-bold">填入</button>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>北京康护机构：<code>org_bj</code> / <code>Org2026</code></span>
+          <button type="button" onclick="fillSaasCred('org_bj','Org2026')" class="text-orange font-bold">填入</button>
+        </div>
+      </div>
+
+      <div class="text-center text-subtle">
+        <a href="/" class="text-green font-semibold">返回健康来敲门品牌官网 →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 已认证：左侧 6 大模块企业级 SaaS 管理后台 -->
+  <div id="saas-workspace" class="saas-layout hidden">
+
+    <!-- 左侧深林绿企业导航栏 -->
+    <aside class="saas-sidebar">
+      <div class="space-y-4">
+        <div class="flex items-center gap-2" style="padding:4px 8px 12px;border-bottom:1px solid rgba(255,255,255,0.12);">
+          <div class="brand-logo" style="background:#d77844;width:32px;height:32px;font-size:15px;">敲</div>
+          <div>
+            <div class="font-extrabold text-sm" style="color:#fff;">健康来敲门 SaaS</div>
+            <div style="font-size:10.5px;color:#93bdaf;" id="saas-side-role">平台总控中心</div>
+          </div>
+        </div>
+
+        <nav class="space-y-1">
+          <button type="button" onclick="switchSaasMod('dashboard')" id="snav-dashboard" class="saas-nav-item active">
+            <span>经营总览看板</span><span>→</span>
+          </button>
+          <button type="button" onclick="switchSaasMod('orders')" id="snav-orders" class="saas-nav-item">
+            <span>订单调度与派单台</span><span id="sbadge-dispatch" class="badge badge-orange">0</span>
+          </button>
+          <button type="button" onclick="switchSaasMod('quality')" id="snav-quality" class="saas-nav-item">
+            <span>服务评价与售后品控</span><span id="sbadge-aftersale" class="badge badge-red hidden">0</span>
+          </button>
+          <button type="button" onclick="switchSaasMod('supply')" id="snav-supply" class="saas-nav-item">
+            <span>护工机构与运力准入</span><span id="sbadge-apply" class="badge badge-green">0</span>
+          </button>
+          <button type="button" onclick="switchSaasMod('finance')" id="snav-finance" class="saas-nav-item">
+            <span>财务清分·提现·发票</span><span>→</span>
+          </button>
+          <button type="button" onclick="switchSaasMod('commercial')" id="snav-commercial" class="saas-nav-item">
+            <span>体检·购药·保险商业化</span><span>→</span>
+          </button>
+        </nav>
+      </div>
+
+      <div class="space-y-2 text-xs" style="border-top:1px solid rgba(255,255,255,0.12);padding-top:14px;">
+        <div id="saas-side-user" style="color:#b8d7cc;font-size:11.5px;">账号：admin</div>
+        <div class="flex gap-2">
+          <a href="/" class="btn-soft" style="flex:1;padding:7px;font-size:11.5px;">品牌官网</a>
+          <button type="button" onclick="handleSaasLogout()" class="btn-soft text-danger" style="flex:1;padding:7px;font-size:11.5px;">安全退出</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧主工作区 -->
+    <div class="saas-main">
+      <header class="saas-topbar">
+        <div>
+          <h2 class="text-lg font-extrabold" style="margin:0;" id="saas-mod-title">经营数据总览看板</h2>
+          <div class="text-xs text-muted" id="saas-mod-sub">实时同步 C端预约、陪诊师 5步履约与财务分账流水</div>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+          <button type="button" onclick="loadSaasData()" class="btn-soft" style="padding:7px 12px;">↻ 刷新实时数据</button>
+          <a href="/api/admin/export-orders.csv" target="_blank" class="btn-outline" style="padding:7px 13px;">导出财务对账报表 (.csv)</a>
+        </div>
+      </header>
+
+      <main class="saas-content text-xs">
+
+        <!-- 模块 1：经营总览看板 -->
+        <section id="smod-dashboard" class="saas-mod space-y-4">
+          <div id="saas-kpi-grid" class="kpi-grid"></div>
+          <div class="md-split-12">
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">合作三甲医院陪诊订单分布与无障碍资源</h3>
+              <div id="saas-hosp-summary" class="space-y-2"></div>
+            </div>
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">最新全平台履约审计流（实时留痕）</h3>
+              <div id="saas-recent-events" class="audit-timeline"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 模块 2：订单调度与派单台 -->
+        <section id="smod-orders" class="saas-mod hidden space-y-3">
+          <div class="ew-card space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div id="saas-order-filters" class="filter-pills-row"></div>
+              <input id="saas-order-search" oninput="renderSaasOrders()" placeholder="搜索订单号 / 患者姓名 / 手机号 / 医院..." style="min-width:240px;" />
+            </div>
+            <div class="overflow-x-auto">
+              <table style="width:100%;min-width:940px;border-collapse:collapse;">
+                <thead>
+                  <tr style="background:var(--ew-paper);border-top:1px solid var(--ew-line);border-bottom:1px solid var(--ew-line);text-align:left;color:var(--ew-muted);">
+                    <th style="padding:10px;">订单号 / 渠道 / 支付</th>
+                    <th style="padding:10px;">患者与失能分级</th>
+                    <th style="padding:10px;">就诊医院 / 科室 / 日期</th>
+                    <th style="padding:10px;">患者确认状态</th>
+                    <th style="padding:10px;">实付 / 抽佣 / 分账</th>
+                    <th style="padding:10px;">承接陪诊师 / SOP节点</th>
+                    <th style="padding:10px;">调度操作</th>
+                  </tr>
+                </thead>
+                <tbody id="saas-orders-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- 模块 3：服务星级评价与售后品控 -->
+        <section id="smod-quality" class="saas-mod hidden space-y-4">
+          <div class="ew-card space-y-2">
+            <h3 class="text-sm font-extrabold text-danger" style="margin:0;">待办投诉与售后申诉工单队列（承诺 30 分钟内响应）</h3>
+            <div id="saas-aftersale-list" class="space-y-2"></div>
+          </div>
+          <div class="ew-card space-y-2">
+            <h3 class="text-sm font-extrabold text-green" style="margin:0;">家属诊后星级评价监控台</h3>
+            <div id="saas-reviews-list" class="space-y-2"></div>
+          </div>
+        </section>
+
+        <!-- 模块 4：护工机构与运力准入 -->
+        <section id="smod-supply" class="saas-mod hidden space-y-4">
+          <div id="saas-apply-card" class="ew-card space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">新入驻机构与个人陪诊员资质审批队列</h3>
+              <span class="badge badge-orange">前 3 年免收押金政策生效中</span>
+            </div>
+            <div id="saas-apply-list" class="space-y-2"></div>
+          </div>
+
+          <div class="md-split-12">
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">B端签约陪护机构台账</h3>
+              <div id="saas-orgs-list" class="space-y-2"></div>
+            </div>
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">在册持证陪诊员运力池</h3>
+              <div id="saas-escorts-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 模块 5：财务清分、提现与电子发票 -->
+        <section id="smod-finance" class="saas-mod hidden space-y-4">
+          <div class="ew-card space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">已付款订单清分对账明细（撮合提成严格 ≤10%）</h3>
+              <a href="/api/admin/export-orders.csv" target="_blank" class="btn-primary" style="padding:6px 12px;">下载 CSV 财务总表</a>
+            </div>
+            <div id="saas-ledger-list" class="space-y-2"></div>
+          </div>
+
+          <div class="md-split-12">
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">陪诊师收入提现打款记录</h3>
+              <div id="saas-withdraw-list" class="space-y-2"></div>
+            </div>
+            <div class="ew-card space-y-2">
+              <h3 class="text-sm font-extrabold text-green" style="margin:0;">客户增值税电子发票开具记录</h3>
+              <div id="saas-invoice-list" class="space-y-2"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 模块 6：体检·购药·保险商业化管理 -->
+        <section id="smod-commercial" class="saas-mod hidden space-y-4">
+          <div class="ew-card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-extrabold text-green" style="margin:0;">扩展场景导流资源位与 CPC 归因收益台账</h3>
+                <div class="text-muted mt-1">覆盖父母体检套餐推荐、医嘱购药直达与适老医疗险投保入口</div>
+              </div>
+              <button type="button" id="saas-add-comm-btn" onclick="openModal('modal-add-comm')" class="btn-primary">+ 新增商业合作位</button>
+            </div>
+            <div id="saas-comm-list" class="space-y-2"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- 智能派单弹窗 -->
+  <div id="modal-dispatch" class="modal-backdrop hidden">
+    <div class="modal-panel space-y-3 text-xs" style="max-width:560px;">
+      <div class="flex items-center justify-between">
+        <span class="badge badge-green">智能规则匹配派单台</span>
+        <button type="button" onclick="closeModal('modal-dispatch')" class="btn-soft" style="padding:3px 9px;">✕</button>
+      </div>
+      <h3 class="text-base font-extrabold" id="disp-title" style="margin:0;">指派陪诊师</h3>
+      <p class="text-muted" style="margin:0;">已按【失能技能覆盖 + 目标医院熟悉度 + 在线听单状态 + 客户评分】自动计算推荐权重：</p>
+      <div id="disp-candidates" class="space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- 审计流水弹窗 -->
+  <div id="modal-events" class="modal-backdrop hidden">
+    <div class="modal-panel space-y-3 text-xs" style="max-width:500px;">
+      <div class="flex items-center justify-between">
+        <span class="badge badge-green">全链路合规审计流水</span>
+        <button type="button" onclick="closeModal('modal-events')" class="btn-soft" style="padding:3px 9px;">✕</button>
+      </div>
+      <h3 class="text-base font-extrabold" id="ev-title" style="margin:0;">订单审计时间轴</h3>
+      <div id="ev-list" class="audit-timeline"></div>
+    </div>
+  </div>
+
+  <!-- 新增商业合作位弹窗 -->
+  <div id="modal-add-comm" class="modal-backdrop hidden">
+    <div class="modal-panel space-y-3 text-xs" style="max-width:440px;">
+      <div class="flex items-center justify-between">
+        <span class="badge badge-green">上架商业合作资源位</span>
+        <button type="button" onclick="closeModal('modal-add-comm')" class="btn-soft" style="padding:3px 9px;">✕</button>
+      </div>
+      <form onsubmit="submitNewCommercial(event)" class="space-y-2.5">
+        <div class="grid-2" style="gap:8px;">
+          <select id="nc-type" class="w-full"><option value="体检推荐">体检推荐</option><option value="购药入口">购药入口</option><option value="保险入口">保险入口</option></select>
+          <input id="nc-cpc" type="number" step="0.5" min="1" required value="8.0" placeholder="单次点击分成(元)" class="w-full" />
+        </div>
+        <input id="nc-title" required placeholder="入口展示标题 *" class="w-full" />
+        <div class="grid-2" style="gap:8px;">
+          <input id="nc-partner" required value="美年大健康 · 官方合作" class="w-full" />
+          <input id="nc-price" required value="¥499" class="w-full" />
+        </div>
+        <input id="nc-sub" required value="支持体检报告一键同步至家庭档案" class="w-full" />
+        <button type="submit" id="nc-submit-btn" class="btn-primary w-full">确认上架至 C端</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/admin/admin-app.js"></script>
+</body>
+</html>

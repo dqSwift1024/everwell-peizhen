@@ -272,6 +272,17 @@ function initDb() {
       status TEXT DEFAULT 'ISSUED',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS withdrawals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      escort_id INTEGER NOT NULL,
+      escort_name TEXT NOT NULL,
+      amount REAL NOT NULL,
+      channel TEXT DEFAULT '微信零钱',
+      account_info TEXT NOT NULL,
+      status TEXT DEFAULT 'PAID',
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Idempotent column migrations for existing SQLite files
@@ -306,7 +317,17 @@ function initDb() {
     upgradeExistingSeedData();
   }
   seedUsersIfEmpty();
+  seedWithdrawalsIfEmpty();
   ensureSampleSvgSlip();
+}
+
+function seedWithdrawalsIfEmpty() {
+  const wCount = db.prepare('SELECT COUNT(*) AS c FROM withdrawals').get().c;
+  if (wCount > 0) return;
+  db.prepare(`
+    INSERT INTO withdrawals (escort_id, escort_name, amount, channel, account_info, status, created_at)
+    VALUES (1, '李淑芬', 5200.00, '工商银行储蓄卡', '尾号 8821 (实名已核验)', 'PAID', '2026-11-10 16:30')
+  `).run();
 }
 
 function ensureSampleSvgSlip() {

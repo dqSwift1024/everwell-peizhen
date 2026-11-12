@@ -179,13 +179,13 @@ function openMobileLoginModal(targetRole = 'FAMILY') {
   const title = document.getElementById('mlogin-title');
   const phoneInp = document.getElementById('mlogin-phone');
   if (targetRole === 'ESCORT') {
-    badge.textContent = '持证陪诊师准入登录';
-    title.textContent = '验证持证陪诊师备案手机号';
-    phoneInp.value = '13811223344';
+    if (badge) badge.textContent = '持证陪诊师准入登录';
+    if (title) title.textContent = '验证持证陪诊师备案手机号';
+    if (phoneInp) phoneInp.value = '13811223344';
   } else {
-    badge.textContent = 'C端家庭照护登录';
-    title.textContent = '欢迎登录健康来敲门';
-    phoneInp.value = '13800138000';
+    if (badge) badge.textContent = 'C端家庭照护登录';
+    if (title) title.textContent = '欢迎登录健康来敲门';
+    if (phoneInp) phoneInp.value = '13800138000';
   }
   openModal('modal-mobile-login');
 }
@@ -473,9 +473,12 @@ function updateGlobalBadgesAndLoop() {
   const activeOrders = APP_STATE.orders.filter(o => o.sop_step >= 0 && o.sop_step < 5);
   const curEscortOrders = APP_STATE.orders.filter(o => o.escort_id === CURRENT_ESCORT_ID && o.sop_step >= 1 && o.sop_step < 5);
 
-  document.getElementById('nav-badge-capp').textContent = String(activeOrders.length);
-  document.getElementById('nav-badge-bapp').textContent = String(curEscortOrders.length);
-  document.getElementById('nav-badge-admin').textContent = String(st.pendingDispatchCount + (st.openAfterSaleCount || 0));
+  const bCapp = document.getElementById('nav-badge-capp');
+  const bBapp = document.getElementById('nav-badge-bapp');
+  const bAdm = document.getElementById('nav-badge-admin');
+  if (bCapp) bCapp.textContent = String(activeOrders.length);
+  if (bBapp) bBapp.textContent = String(curEscortOrders.length);
+  if (bAdm) bAdm.textContent = String(st.pendingDispatchCount + (st.openAfterSaleCount || 0));
 
   const uncheckedMeds = Math.max(0, st.medsTotal - st.medsChecked);
   const medBadge = document.getElementById('tab-badge-meds');
@@ -483,6 +486,9 @@ function updateGlobalBadgesAndLoop() {
     medBadge.textContent = String(uncheckedMeds);
     medBadge.classList.toggle('hidden', uncheckedMeds === 0);
   }
+
+  const loopHintEl = document.getElementById('loop-live-hint');
+  if (!loopHintEl) return;
 
   for (let i = 1; i <= 5; i++) {
     const el = document.getElementById('loop-step-' + i);
@@ -517,9 +523,13 @@ function updateGlobalBadgesAndLoop() {
 
 // ==================== 1. Web Portal & Order Lookup ====================
 function recalcWebPrice() {
-  const base = Number(document.getElementById('wb-pkg').value.split('|')[0] || 288);
-  const mob = Number(document.getElementById('wb-mobility').value.split('|')[0] || 80);
-  document.getElementById('wb-live-price').textContent = `¥${base + mob}`;
+  const pkg = document.getElementById('wb-pkg');
+  const mob = document.getElementById('wb-mobility');
+  const out = document.getElementById('wb-live-price');
+  if (!pkg || !mob || !out) return;
+  const base = Number(pkg.value.split('|')[0] || 288);
+  const m = Number(mob.value.split('|')[0] || 80);
+  out.textContent = `¥${base + m}`;
 }
 
 function syncWebHospitalCity() {
@@ -589,7 +599,9 @@ async function handleWebOrderSubmit(e) {
 
 async function handleWebOrderLookup(e) {
   if (e) e.preventDefault();
-  const q = document.getElementById('wb-lookup-input').value.trim();
+  const inp = document.getElementById('wb-lookup-input');
+  if (!inp) return;
+  const q = inp.value.trim();
   const btn = document.getElementById('wb-lookup-btn');
   const box = document.getElementById('wb-lookup-results');
   const json = await apiRequest(`/api/orders/lookup?q=${encodeURIComponent(q)}`, {}, btn);
@@ -769,14 +781,19 @@ function renderCApp() {
   // Auth status in phone header
   const statusPill = document.getElementById('capp-auth-status-pill');
   const headerUserBtn = document.getElementById('capp-header-user-btn');
+  const isWorkbench = Boolean(document.getElementById('loop-live-hint'));
   if (MOBILE_USER) {
-    statusPill.textContent = '已实名登录';
-    headerUserBtn.textContent = `${MOBILE_USER.display_name.slice(0, 6)} · 已登录`;
-    headerUserBtn.style.background = 'rgba(255,255,255,0.22)';
+    if (statusPill) statusPill.textContent = '已实名登录';
+    if (headerUserBtn) {
+      headerUserBtn.textContent = `${MOBILE_USER.display_name.slice(0, 6)} · 已登录`;
+      headerUserBtn.style.background = 'rgba(255,255,255,0.22)';
+    }
   } else {
-    statusPill.textContent = '游客浏览态';
-    headerUserBtn.textContent = '未登录 · 点击一键登录';
-    headerUserBtn.style.background = 'var(--ew-orange)';
+    if (statusPill) statusPill.textContent = '游客浏览态';
+    if (headerUserBtn) {
+      headerUserBtn.textContent = '未登录 · 点击一键登录';
+      headerUserBtn.style.background = 'var(--ew-orange)';
+    }
   }
 
   // Elder switcher
@@ -851,8 +868,8 @@ function renderCApp() {
           <div class="flex flex-wrap gap-1-5">
             ${isUnpaid ? `<button type="button" onclick="openCashierById(${Number(ord.id)}, false)" class="btn-orange" style="padding:6px 11px;font-size:11.5px;">立即去支付</button>` : ''}
             ${!isCancelled && !isUnpaid && ord.patient_confirm_status !== 'CONFIRMED' ? `<button type="button" onclick="openPatientConfirmModalForOrder(${Number(ord.id)})" class="btn-orange" style="padding:6px 10px;font-size:11.5px;">患者确认(+)</button>` : ''}
-            ${!isCancelled && !isUnpaid && ord.sop_step === 0 && ord.patient_confirm_status === 'CONFIRMED' ? `<button type="button" onclick="switchTerminal('admin')" class="btn-outline" style="padding:5px 10px;font-size:11.5px;">去后台派单 →</button>` : ''}
-            ${!isCancelled && ord.sop_step >= 1 && ord.sop_step < 5 && ord.escort_id ? `<button type="button" onclick="jumpToEscortForOrder(${Number(ord.id)})" class="btn-primary" style="padding:6px 10px;font-size:11.5px;">去陪诊端打卡 →</button>` : ''}
+            ${isWorkbench && !isCancelled && !isUnpaid && ord.sop_step === 0 && ord.patient_confirm_status === 'CONFIRMED' ? `<button type="button" onclick="switchTerminal('admin')" class="btn-outline" style="padding:5px 10px;font-size:11.5px;">去后台派单 →</button>` : ''}
+            ${isWorkbench && !isCancelled && ord.sop_step >= 1 && ord.sop_step < 5 && ord.escort_id ? `<button type="button" onclick="jumpToEscortForOrder(${Number(ord.id)})" class="btn-primary" style="padding:6px 10px;font-size:11.5px;">去陪诊端打卡 →</button>` : ''}
             ${ord.sop_step >= 4 ? `<button type="button" onclick="openReviewModal(${Number(ord.id)})" class="btn-outline" style="padding:5px 10px;font-size:11.5px;">${ord.rating_score > 0 ? '修改评价/售后' : '评价陪诊师/售后'}</button>` : ''}
             ${!isCancelled ? `<button type="button" onclick="openRideModalByOrderId(${Number(ord.id)})" class="btn-blue" style="padding:6px 9px;font-size:11px;">跳滴滴/高德(+)</button>` : ''}
             ${!isCancelled && !isUnpaid && ord.sop_step < 5 ? `<button type="button" onclick="openCashierForOvertime(${Number(ord.id)})" class="btn-soft" style="padding:6px 9px;font-size:11px;">加钟+¥100</button>` : ''}
@@ -1680,7 +1697,9 @@ function renderBApp() {
     }).join('');
   }
 
-  document.getElementById('bapp-escort-name').textContent = `${curEscort.name} · 陪诊师工作台`;
+  const bNameEl = document.getElementById('bapp-escort-name');
+  if (!bNameEl) return;
+  bNameEl.textContent = `${curEscort.name} · 陪诊师工作台`;
   document.getElementById('bapp-escort-meta').textContent = `${curEscort.org_name} ｜ 健康证至 ${curEscort.health_cert_expiry}`;
   const schedBtn = document.getElementById('bapp-schedule-btn');
   if (schedBtn) {

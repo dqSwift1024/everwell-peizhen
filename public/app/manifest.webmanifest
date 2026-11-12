@@ -1,0 +1,10 @@
+{
+  "name": "健康来敲门 · 家庭关怀与陪诊",
+  "short_name": "健康来敲门",
+  "start_url": "/app/",
+  "scope": "/app/",
+  "display": "standalone",
+  "background_color": "#faf9f5",
+  "theme_color": "#075e50",
+  "description": "面向高龄失能父母与异地子女的三甲医院专人陪诊与日常健康守护平台"
+}

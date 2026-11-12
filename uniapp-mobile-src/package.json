@@ -1,0 +1,25 @@
+{
+  "name": "everwell-uniapp-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "健康来敲门 Everwell · 微信小程序与 iOS/Android 商业生产端工程 (Vue 3 + TypeScript + Uni-app)",
+  "scripts": {
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "dev:h5": "uni",
+    "build:h5": "uni build",
+    "build:app": "uni build -p app"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "^3.0.0-4020920240930001",
+    "@dcloudio/uni-components": "^3.0.0-4020920240930001",
+    "@dcloudio/uni-mp-weixin": "^3.0.0-4020920240930001",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/vite-plugin-uni": "^3.0.0-4020920240930001",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.8"
+  }
+}

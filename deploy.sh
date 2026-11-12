@@ -74,5 +74,10 @@ fi
 sleep 1
 systemctl status everwell-peizhen.service --no-pager | head -n 12
 echo ""
-echo "🎉 部署成功！公网访问地址: http://${SERVER_IP}:${APP_PORT}"
+echo "🎉 商业多端正式版部署成功！各独立应用公网访问地址："
+echo "  🌐 1. 官方品牌商业官网:       http://${SERVER_IP}:${APP_PORT}/"
+echo "  📱 2. C端家庭关怀移动应用:    http://${SERVER_IP}:${APP_PORT}/app/"
+echo "  🪪 3. 持证陪诊师独立执业端:    http://${SERVER_IP}:${APP_PORT}/escort/"
+echo "  🖥️ 4. 运营总控与B端机构SaaS:  http://${SERVER_IP}:${APP_PORT}/admin/"
+echo "  🔬 5. 四端同屏联调沙盘(辅助): http://${SERVER_IP}:${APP_PORT}/workbench.html"
 EOF

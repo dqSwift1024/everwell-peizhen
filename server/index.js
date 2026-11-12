@@ -169,7 +169,11 @@ function getBootstrapData(authUser = null) {
   const commercialSlots = db.prepare('SELECT * FROM commercial_slots ORDER BY id ASC').all();
   const applications = db.prepare('SELECT * FROM applications ORDER BY id DESC').all();
   const invoices = db.prepare('SELECT * FROM invoices ORDER BY id DESC').all();
+  const withdrawals = db.prepare('SELECT * FROM withdrawals ORDER BY id DESC').all();
 
+  const totalGmv = orders
+    .filter(o => o.sop_step >= 0 && o.payment_status === 'PAID')
+    .reduce((sum, o) => sum + Number(o.total_price || 0), 0);
   const totalPlatformFee = orders
     .filter(o => o.sop_step >= 0 && o.payment_status === 'PAID')
     .reduce((sum, o) => sum + Number(o.platform_fee || 0), 0);
@@ -194,6 +198,7 @@ function getBootstrapData(authUser = null) {
     commercialSlots,
     applications,
     invoices,
+    withdrawals,
     stats: {
       orderCount: orders.length,
       unpaidCount: orders.filter(o => o.sop_step >= 0 && o.payment_status === 'UNPAID').length,
@@ -202,6 +207,7 @@ function getBootstrapData(authUser = null) {
       activeServiceCount: orders.filter(o => o.sop_step >= 1 && o.sop_step < 5).length,
       completedOrderCount: orders.filter(o => o.sop_step === 5).length,
       openAfterSaleCount: orders.filter(o => o.after_sale_status === 'OPEN').length,
+      totalGmv: Number(totalGmv.toFixed(2)),
       totalPlatformFee: Number(totalPlatformFee.toFixed(2)),
       totalAdRevenue: Number(totalAdRevenue.toFixed(2)),
       totalAdClicks,
@@ -1187,12 +1193,84 @@ const server = http.createServer(async (req, res) => {
       return res.end(csvBody);
     }
 
-    // ==================== 8. Static File Serving ====================
+    // Escort Self-Claim Order from Pool (Standalone Escort App)
+    const claimMatch = pathname.match(/^\/api\/orders\/(\d+)\/claim$/);
+    if (req.method === 'POST' && claimMatch) {
+      const escUser = requireRole(req, ['ESCORT']);
+      const orderId = Number(claimMatch[1]);
+      const ord = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+      const escort = db.prepare('SELECT * FROM escorts WHERE id = ?').get(escUser.escort_id);
+      if (!ord || !escort) return sendJson(res, 404, { ok: false, msg: '订单或持证档案不存在' });
+      if (ord.payment_status !== 'PAID') return sendJson(res, 400, { ok: false, msg: '仅已付款订单可抢单承接' });
+      if (ord.sop_step !== 0) return sendJson(res, 400, { ok: false, msg: '该订单已被指派或承接' });
+
+      const reqCode = String(ord.mobility_level || 'L0').slice(0, 2);
+      if (!String(escort.skills || '').includes(reqCode)) {
+        return sendJson(res, 400, { ok: false, msg: `您的认证技能（${escort.skills}）暂未覆盖本单所需的 ${reqCode} 分级护理要求` });
+      }
+
+      let commRate = 0.06;
+      if (escort.org_id) {
+        const org = db.prepare('SELECT commission_rate FROM organizations WHERE id = ?').get(escort.org_id);
+        if (org) commRate = Number(org.commission_rate);
+      }
+      const platformFee = Number((ord.total_price * commRate).toFixed(2));
+      const providerPayout = Number((ord.total_price - platformFee).toFixed(2));
+
+      withTransaction(() => {
+        db.prepare(`
+          UPDATE orders
+          SET escort_id = ?, escort_name = ?, org_id = ?, org_name = ?,
+              commission_rate = ?, platform_fee = ?, provider_payout = ?,
+              sop_step = 1, live_note = ?
+          WHERE id = ?
+        `).run(
+          escort.id, escort.name, escort.org_id, escort.org_name,
+          commRate, platformFee, providerPayout,
+          `持证陪诊师【${escort.name}】已在听单大厅主动承接本单，正准备前往接手位置`,
+          orderId
+        );
+        logOrderEvent(orderId, 'CLAIMED', `持证陪诊师主动抢单：${escort.name}`, `资质：${escort.cert_title}；服务方应得 ¥${providerPayout}`, escort.name);
+      });
+      return sendJson(res, 200, { ok: true, data: getBootstrapData(escUser) });
+    }
+
+    // Escort Earnings Withdrawal Request (Standalone Escort App Wallet)
+    if (req.method === 'POST' && pathname === '/api/escorts/withdraw') {
+      const escUser = requireRole(req, ['ESCORT']);
+      const b = await parseBody(req);
+      const escort = db.prepare('SELECT * FROM escorts WHERE id = ?').get(escUser.escort_id);
+      if (!escort) return sendJson(res, 404, { ok: false, msg: '持证陪诊师档案不存在' });
+
+      const withdrawnSum = db.prepare('SELECT COALESCE(SUM(amount), 0) AS s FROM withdrawals WHERE escort_id = ?').get(escort.id).s;
+      const available = Number((Number(escort.total_earned) - Number(withdrawnSum)).toFixed(2));
+      const amount = Number(Number(b.amount || 0).toFixed(2));
+      if (!Number.isFinite(amount) || amount < 50) {
+        return sendJson(res, 400, { ok: false, msg: '单笔提现金额最低为 ¥50.00' });
+      }
+      if (amount > available) {
+        return sendJson(res, 400, { ok: false, msg: `可提现余额不足（当前可提现 ¥${available.toFixed(2)}）` });
+      }
+
+      const channel = cleanStr(b.channel, '微信零钱', 30);
+      const accountInfo = cleanStr(b.account_info, `${maskPhone(escort.phone)} 实名认证账户`, 80);
+      db.prepare(`
+        INSERT INTO withdrawals (escort_id, escort_name, amount, channel, account_info, status, created_at)
+        VALUES (?, ?, ?, ?, ?, 'PAID', ?)
+      `).run(escort.id, escort.name, amount, channel, accountInfo, getNowStr());
+
+      return sendJson(res, 201, { ok: true, amount, remaining: Number((available - amount).toFixed(2)), data: getBootstrapData(escUser) });
+    }
+
+    // ==================== 8. Static File Serving (Multi-App Directory Routing) ====================
     const safeRelPath = pathname === '/' ? 'index.html' : decodeURIComponent(pathname).replace(/^\/+/, '');
-    const filePath = path.resolve(PUBLIC_DIR, safeRelPath);
+    let filePath = path.resolve(PUBLIC_DIR, safeRelPath);
     if (!filePath.startsWith(PUBLIC_DIR)) {
       res.writeHead(403);
       return res.end('Forbidden');
+    }
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+      filePath = path.join(filePath, 'index.html');
     }
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
       const ext = path.extname(filePath).toLowerCase();
@@ -1201,6 +1279,7 @@ const server = http.createServer(async (req, res) => {
         '.js': 'application/javascript; charset=utf-8',
         '.css': 'text/css; charset=utf-8',
         '.json': 'application/json; charset=utf-8',
+        '.webmanifest': 'application/manifest+json; charset=utf-8',
         '.svg': 'image/svg+xml',
         '.png': 'image/png',
         '.jpg': 'image/jpeg',

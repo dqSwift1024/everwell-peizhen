@@ -28,6 +28,7 @@ async function runTests() {
   const uploadedFiles = [];
   let createdPatientId = null;
   let createdInvoiceId = null;
+  let createdWithdrawalId = null;
   let tempDeletedPhone = '13966668888';
 
   await new Promise(resolve => server.listen(TEST_PORT, resolve));
@@ -41,19 +42,24 @@ async function runTests() {
     assert.strictEqual(health.json.walMode.toLowerCase(), 'wal');
     console.log('✅ 2. GET /api/health (SQLite WAL 高可靠模式) verified');
 
-    // 2. Offline Zero-CDN Static Asset Check & 5-Tab Spec Check
-    const htmlRes = await request('GET', '/');
-    assert.strictEqual(htmlRes.status, 200);
-    assert(!/cdn\.tailwindcss\.com/i.test(htmlRes.text), 'Must NOT depend on external Tailwind CDN');
-    assert(!/<script[^>]+src=["']https?:/i.test(htmlRes.text), 'Must NOT load external blocking JS CDN');
-    const tabBtnMatches = [...htmlRes.text.matchAll(/class="capp-tab-btn/g)];
-    assert.strictEqual(tabBtnMatches.length, 5, 'Mobile bottom tabBar must have exactly 5 tabs (WeChat hard limit)');
+    // 2. Standalone Commercial Applications & Zero-CDN Offline Assets Check
+    for (const appRoute of ['/', '/web/', '/app/', '/escort/', '/admin/', '/workbench.html']) {
+      const r = await request('GET', appRoute);
+      assert.strictEqual(r.status, 200, `Commercial route ${appRoute} must return 200`);
+      assert(!/cdn\.tailwindcss\.com/i.test(r.text), `${appRoute} must NOT depend on external Tailwind CDN`);
+      assert(!/<script[^>]+src=["']https?:/i.test(r.text), `${appRoute} must NOT load external blocking JS CDN`);
+    }
+    const cAppHtml = await request('GET', '/app/');
+    const tabBtnMatches = [...cAppHtml.text.matchAll(/class="capp-tab-btn/g)];
+    assert.strictEqual(tabBtnMatches.length, 5, 'Standalone C-App bottom tabBar must have exactly 5 tabs');
+    const pwaManifest = await request('GET', '/app/manifest.webmanifest');
+    assert.strictEqual(pwaManifest.status, 200);
     const cssRes = await request('GET', '/styles.css');
     const jsRes = await request('GET', '/app.js');
     assert.strictEqual(cssRes.status, 200);
     assert.strictEqual(jsRes.status, 200);
     assert(jsRes.text.includes('function escapeHtml'), 'Frontend must enforce escapeHtml XSS protection');
-    console.log('✅ 3. Zero-CDN Offline Assets & 微信小程序标准 5-Tab 底部导航上限 verified');
+    console.log('✅ 3. 四大独立商业应用路由 (/, /app/, /escort/, /admin/) + PWA Manifest + 零CDN verified');
 
     // 3. Multi-Role Mobile Auth, Privacy Checkbox Gate, Escort Whitelist & Account Deletion
     const noPrivacy = await request('POST', '/api/auth/mobile-login', {
@@ -334,7 +340,47 @@ async function runTests() {
     assert(burst.every(r => r.status === 200));
     console.log('✅ 15. 异常JSON容错保护 + 20并发高频请求稳定性压测 verified');
 
-    console.log('\n🎉 ALL 15 PRODUCTION-DELIVERY FULL-STACK E2E SUITES PASSED 100%!');
+    // 16. Escort Standalone App: Proactive Order Claiming & Earnings Wallet Withdrawal
+    const poolOrd = await request('POST', '/api/orders', {
+      source_channel: '官方Web网站',
+      patient_name: '待抢单测试老人',
+      contact_phone: '13800138000',
+      visit_date: '2099-12-05',
+      mobility_level: 'L2 需轮椅代借与推行',
+      base_price: 288,
+      mobility_fee: 80
+    });
+    const poolOrdId = poolOrd.json.order.id;
+    createdOrderIds.push(poolOrdId);
+
+    const escortToken = certEscort.json.token;
+    const claimRes = await request('POST', `/api/orders/${poolOrdId}/claim`, {}, escortToken);
+    assert.strictEqual(claimRes.status, 200, 'Certified escort must be able to claim paid pool order');
+
+    const badWd = await request('POST', '/api/escorts/withdraw', { amount: 10 }, escortToken);
+    assert.strictEqual(badWd.status, 400, 'Withdrawal < ¥50 must be rejected');
+
+    const okWd = await request('POST', '/api/escorts/withdraw', {
+      amount: 100,
+      channel: '微信零钱',
+      account_info: '测试实名零钱'
+    }, escortToken);
+    assert.strictEqual(okWd.status, 201);
+    createdWithdrawalId = okWd.json.data.withdrawals[0].id;
+    console.log('✅ 16. 陪诊师独立App：听单大厅主动抢单 (/claim) + 收入钱包提现 (/withdraw) verified');
+
+    // 17. Uni-App WeChat Mini-Program & App Complete 9-Page Source Tree Check
+    const uniDir = path.join(__dirname, '..', 'uniapp-mobile-src');
+    const pagesCfg = JSON.parse(fs.readFileSync(path.join(uniDir, 'pages.json'), 'utf8'));
+    assert.strictEqual(pagesCfg.pages.length, 9, 'Uni-App must declare all 9 commercial pages');
+    assert.strictEqual(pagesCfg.tabBar.list.length, 5, 'Uni-App tabBar must have 5 items');
+    for (const pg of pagesCfg.pages) {
+      const vuePath = path.join(uniDir, `${pg.path}.vue`);
+      assert(fs.existsSync(vuePath), `Missing Uni-App page implementation: ${pg.path}.vue`);
+    }
+    console.log('✅ 17. 微信小程序 & iOS/Android 跨端工程 (uniapp-mobile-src 全量 9 个 .vue 页面) verified');
+
+    console.log('\n🎉 ALL 17 COMMERCIAL PRODUCTION-DELIVERY E2E SUITES PASSED 100%!');
   } finally {
     for (const oid of createdOrderIds) {
       const reps = db.prepare('SELECT id FROM medical_reports WHERE order_id = ?').all(oid);
@@ -350,6 +396,9 @@ async function runTests() {
     }
     if (createdInvoiceId) {
       db.prepare('DELETE FROM invoices WHERE id = ?').run(createdInvoiceId);
+    }
+    if (createdWithdrawalId) {
+      db.prepare('DELETE FROM withdrawals WHERE id = ?').run(createdWithdrawalId);
     }
     for (const fp of uploadedFiles) {
       try { if (fs.existsSync(fp)) fs.unlinkSync(fp); } catch (_) {}
